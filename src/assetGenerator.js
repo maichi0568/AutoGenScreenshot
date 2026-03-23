@@ -30,6 +30,7 @@ export async function generateImage(prompt, aspectRatio = '9:16') {
     });
 
     if (!response.generatedImages?.[0]?.image?.imageBytes) {
+      console.error('[imagen-fail] full response:', JSON.stringify(response).slice(0, 500));
       throw new Error(`Image generation failed: ${JSON.stringify(response).slice(0, 200)}`);
     }
     const imageData = response.generatedImages[0].image.imageBytes;

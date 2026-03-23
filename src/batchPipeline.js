@@ -145,6 +145,7 @@ export async function processBatchLanguage(lang, values, templateCode = 'tmpl1',
     noRefSlots.map(async slot => {
       const basePrompt = adminPrompts[slot.promptKey] || values[slot.promptKey] || 'portrait photo, professional photography';
       const prompt = `${country} ${basePrompt}`;
+      console.log(`[gen-image] slot=${slot.key} prompt=${prompt.slice(0, 100)}... ratio=${slot.aspectRatio}`);
       const result = await generateImage(prompt, slot.aspectRatio);
       imageResultMap[slot.key] = result;
       return result;
