@@ -17,11 +17,12 @@ const batches = {};
 
 // GET /api/test-imagen — debug endpoint
 router.get('/test-imagen', async (req, res) => {
+  const prompt = req.query.p || 'a beautiful landscape with mountains and blue sky';
   try {
-    const result = await generateImage('a beautiful landscape with mountains and blue sky', '9:16');
-    res.json({ ok: true, url: `/api/cache/${basename(result.path)}` });
+    const result = await generateImage(prompt, '9:16');
+    res.json({ ok: true, prompt, url: `/api/cache/${basename(result.path)}` });
   } catch (err) {
-    res.json({ ok: false, error: err.message });
+    res.json({ ok: false, prompt, error: err.message });
   }
 });
 
