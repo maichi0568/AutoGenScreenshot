@@ -31,7 +31,7 @@ export async function captureScreenshot(html, jobId, opts = {}) {
     await page.setViewport({ width, height, deviceScaleFactor: scale });
 
     // Load HTML — <base> tag inside the HTML ensures CSS/SVG/fonts resolve via localhost
-    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
+    await page.setContent(html, { waitUntil: 'networkidle2', timeout: 60000 });
 
     // Wait for web fonts (Poppins etc.) to finish loading
     await page.evaluate(() => document.fonts.ready);
