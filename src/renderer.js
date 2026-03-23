@@ -39,7 +39,8 @@ export function renderTemplate(template, assets) {
   let html = readFileSync(layoutPath, 'utf-8');
 
   // Inject <base> tag so CSS/SVG/fonts resolve correctly when loaded by Puppeteer
-  const baseHref = `http://localhost:${PORT}/templates/${code}/`;
+  const host = `http://127.0.0.1:${PORT}`;
+  const baseHref = `${host}/templates/${code}/`;
   html = html.replace(/(<head[^>]*>)/i, `$1\n  <base href="${baseHref}">`);
 
   // Replace all {{key}} placeholders
