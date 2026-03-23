@@ -26,6 +26,42 @@ router.get('/test-imagen', async (req, res) => {
   }
 });
 
+// GET /api/test-batch-prompt — test with exact batch logic
+router.get('/test-batch-prompt', async (req, res) => {
+  const tpl = req.query.tpl || 'template6';
+  try {
+    const { readFileSync, existsSync } = await import('fs');
+    const { join } = await import('path');
+    const promptsPath = join(process.cwd(), 'config', 'prompts.json');
+    const fieldsPath = join(process.cwd(), 'config', 'template-fields.json');
+
+    const prompts = existsSync(promptsPath) ? JSON.parse(readFileSync(promptsPath, 'utf-8')) : {};
+    const fields = existsSync(fieldsPath) ? JSON.parse(readFileSync(fieldsPath, 'utf-8')) : {};
+
+    const adminPrompts = prompts[tpl] || {};
+    const dynFields = fields[tpl] || [];
+    const imageFields = dynFields.filter(f => f.type === 'image' || f.type === 'upload');
+
+    const firstSlot = imageFields[0];
+    if (!firstSlot) return res.json({ ok: false, error: 'No image fields found', tpl, adminPrompts: Object.keys(adminPrompts), dynFields });
+
+    const promptKey = firstSlot.key + '_prompt';
+    const basePrompt = adminPrompts[promptKey] || 'portrait photo';
+    const fullPrompt = `English ${basePrompt}`;
+
+    res.json({
+      ok: 'testing',
+      promptKey,
+      promptLength: fullPrompt.length,
+      fullPrompt,
+      generating: true
+    });
+
+  } catch (err) {
+    res.json({ ok: false, error: err.message });
+  }
+});
+
 // POST /api/gen-image
 router.post('/gen-image', async (req, res) => {
   const { prompt, aspectRatio } = req.body;
