@@ -1,8 +1,6 @@
 // ESM module
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
-
-const PORT = process.env.PORT || 3000;
 
 // Template configs: placeholders + dimensions
 const TEMPLATE_META = {
@@ -38,10 +36,13 @@ export function renderTemplate(template, assets) {
   const layoutPath = join('./templates', code, 'layout.html');
   let html = readFileSync(layoutPath, 'utf-8');
 
-  // Inject <base> tag so CSS/SVG/fonts resolve correctly when loaded by Puppeteer
-  const host = `http://127.0.0.1:${PORT}`;
-  const baseHref = `${host}/templates/${code}/`;
-  html = html.replace(/(<head[^>]*>)/i, `$1\n  <base href="${baseHref}">`);
+  // Inline external CSS so Puppeteer doesn't need network access
+  const cssPath = join('./templates', code, 'styles.css');
+  if (existsSync(cssPath)) {
+    const cssContent = readFileSync(cssPath, 'utf-8');
+    html = html.replace('href="styles.css"', '');
+    html = html.replace(/(<head[^>]*>)/i, `$1\n  <style>${cssContent}</style>`);
+  }
 
   // Replace all {{key}} placeholders
   for (const [key, value] of Object.entries(assets)) {
