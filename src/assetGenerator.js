@@ -29,6 +29,9 @@ export async function generateImage(prompt, aspectRatio = '9:16') {
       config: { numberOfImages: 1, outputMimeType: 'image/png', aspectRatio }
     });
 
+    if (!response.generatedImages?.[0]?.image?.imageBytes) {
+      throw new Error(`Image generation failed: ${JSON.stringify(response).slice(0, 200)}`);
+    }
     const imageData = response.generatedImages[0].image.imageBytes;
     const buffer = Buffer.from(imageData, 'base64');
     return saveToCache(cacheKey, buffer);
