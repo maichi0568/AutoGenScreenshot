@@ -1,0 +1,8 @@
+node_modules
+.env
+.git
+.claude
+.vercel
+uploads
+assets/cache
+assets/output

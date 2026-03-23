@@ -5,3 +5,4 @@ assets/cache/
 assets/output/
 .claude/settings.local.json
 .mcp.json
+.vercel

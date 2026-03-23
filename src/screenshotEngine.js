@@ -1,6 +1,5 @@
 // ESM module
-import puppeteerCore from 'puppeteer-core';
-import chromium from '@sparticuz/chromium';
+import puppeteer from 'puppeteer';
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 
@@ -21,18 +20,10 @@ export async function captureScreenshot(html, jobId, opts = {}) {
   let browser;
 
   const tryCapture = async () => {
-    const executablePath = process.env.VERCEL
-      ? await chromium.executablePath()
-      : process.env.CHROME_PATH || null;
-
-    browser = await puppeteerCore.launch({
-      headless: chromium.headless,
-      executablePath: executablePath || undefined,
-      args: chromium.args,
-      defaultViewport: null,
-      ...(executablePath ? {} : {
-        channel: 'chrome',
-      }),
+    browser = await puppeteer.launch({
+      headless: true,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--font-render-hinting=none']
     });
     const page = await browser.newPage();
 
