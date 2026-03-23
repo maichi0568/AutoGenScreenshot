@@ -63,8 +63,8 @@ export async function processBatchLanguage(lang, values, templateCode = 'tmpl1',
   // If no hardcoded config, build from dynamic field config
   if (!config) {
     const dynFields = loadFieldConfig()[templateCode];
-    if (!dynFields) throw new Error(`Unknown template: ${templateCode}`);
-    const imageFields = dynFields.filter(f => f.type === 'image');
+    if (!dynFields) throw new Error(`Unknown template: ${templateCode}. No field config found.`);
+    const imageFields = dynFields.filter(f => f.type === 'image' || f.type === 'upload');
     config = {
       template: { template_code: templateCode, name: templateCode },
       images: imageFields.map(f => ({
