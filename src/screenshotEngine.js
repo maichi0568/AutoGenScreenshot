@@ -31,19 +31,25 @@ export async function captureScreenshot(html, jobId, opts = {}) {
     await page.setViewport({ width, height, deviceScaleFactor: scale });
 
     // Load HTML — <base> tag inside the HTML ensures CSS/SVG/fonts resolve via localhost
-    await page.setContent(html, { waitUntil: 'networkidle2', timeout: 60000 });
+    await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
-    // Wait for web fonts (Poppins etc.) to finish loading
-    await page.evaluate(() => document.fonts.ready);
+    // Wait for fonts and images with timeout (don't hang forever)
+    await Promise.race([
+      (async () => {
+        await page.evaluate(() => document.fonts.ready);
+        await page.evaluate(() =>
+          Promise.all(
+            [...document.images].map(img =>
+              img.complete ? Promise.resolve() : new Promise(r => { img.onload = img.onerror = r; })
+            )
+          )
+        );
+      })(),
+      new Promise(r => setTimeout(r, 15000)) // max 15s for fonts/images
+    ]);
 
-    // Wait for all images to decode
-    await page.evaluate(() =>
-      Promise.all(
-        [...document.images].map(img =>
-          img.complete ? Promise.resolve() : new Promise(r => { img.onload = img.onerror = r; })
-        )
-      )
-    );
+    // Extra settle time
+    await new Promise(r => setTimeout(r, 1000));
 
     // Capture exactly the template canvas (not the whole browser viewport)
     const screenshot = await page.screenshot({
