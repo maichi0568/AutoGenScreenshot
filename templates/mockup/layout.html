@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bring Photos Together Naturally</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;800&display=swap');
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #000;
+      min-height: 1920px;
+      min-width: 1080px;
+      overflow-x: auto;
+    }
+    .figma-bg {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      margin: 0 auto;
+      background: linear-gradient(180deg, #000 20.715%, #ff5858 55.485%, #f9a3a3 99.469%);
+      overflow: hidden;
+      font-family: 'Poppins', Arial, sans-serif;
+    }
+    .figma-title {
+      position: absolute;
+      left: 50%;
+      top: 181.05px;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: center;
+      font-family: 'Poppins', Arial, sans-serif;
+      font-weight: 800;
+      font-size: 87.54px;
+      line-height: 103px;
+      text-transform: capitalize;
+      background: linear-gradient(90deg, #f37878, #ffe9e9);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-fill-color: transparent;
+      white-space: nowrap;
+      margin-bottom: 0;
+      z-index: 2;
+    }
+    .figma-title p { margin: 0; }
+    .main-img-frame {
+      position: absolute;
+      left: 72px;
+      top: 368px;
+      width: 936px;
+      height: 1552px;
+      border-radius: 95.219px;
+      overflow: hidden;
+      z-index: 1;
+      background: none;
+    }
+    .main-img {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+    }
+    .vector-img {
+      position: absolute;
+      left: 0;
+      top: 2.25px;
+      width: 893.88px;
+      height: 1519.11px;
+      border-radius: 100px;
+      object-fit: cover;
+      pointer-events: none;
+      z-index: 2;
+    }
+  </style>
+</head>
+<body>
+  <div class="figma-bg">
+    <div class="figma-title">
+      <p>{{text_1}}</p>
+    </div>
+    <div class="main-img-frame">
+      <img class="main-img" src="{{image_1}}" alt="Home 1" style="border-radius:100px;" />
+      <img class="vector-img" src="{{image_2}}" alt="Vector" />
+    </div>
+  </div>
+</body>
+</html>

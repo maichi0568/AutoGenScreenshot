@@ -1,0 +1,229 @@
+{
+  "template2": [
+    {
+      "key": "text_1",
+      "type": "text",
+      "label": "text 1",
+      "ratio": "9:16"
+    },
+    {
+      "key": "image_1",
+      "type": "image",
+      "label": "image 1",
+      "ratio": "9:16"
+    },
+    {
+      "key": "image_2",
+      "type": "image",
+      "label": "image 2",
+      "ratio": "9:16"
+    },
+    {
+      "key": "description",
+      "type": "text",
+      "label": "description",
+      "ratio": "9:16"
+    }
+  ],
+  "template3": [
+    {
+      "key": "image_1",
+      "type": "image",
+      "label": "Image 1",
+      "ratio": "9:16"
+    },
+    {
+      "key": "image_2",
+      "type": "image",
+      "label": "Image 2",
+      "ratio": "9:16"
+    },
+    {
+      "key": "image_3",
+      "type": "image",
+      "label": "Image 3",
+      "ratio": "9:16"
+    },
+    {
+      "key": "image_4",
+      "type": "image",
+      "label": "Image 4",
+      "ratio": "9:16"
+    },
+    {
+      "key": "tagline",
+      "type": "tagline",
+      "label": "tagline"
+    }
+  ],
+  "template5": [
+    {
+      "key": "image_1",
+      "type": "image",
+      "label": "Image 1",
+      "ratio": "9:16"
+    },
+    {
+      "key": "text_1",
+      "type": "text",
+      "label": "text 1"
+    },
+    {
+      "key": "description",
+      "type": "text",
+      "label": "description"
+    }
+  ],
+  "temp2": [
+    {
+      "key": "image_1",
+      "type": "image",
+      "label": "Image 1",
+      "ratio": "9:16"
+    },
+    {
+      "key": "image_2",
+      "type": "image",
+      "label": "Image 2",
+      "ratio": "9:16"
+    },
+    {
+      "key": "text_1",
+      "type": "text",
+      "label": "text 1"
+    },
+    {
+      "key": "description",
+      "type": "text",
+      "label": "description"
+    }
+  ],
+  "template4": [
+    {
+      "key": "image_1",
+      "type": "image",
+      "label": "Image 1",
+      "ratio": "9:16"
+    },
+    {
+      "key": "image_2",
+      "type": "image",
+      "label": "Image 2",
+      "ratio": "9:16"
+    },
+    {
+      "key": "image_3",
+      "type": "image",
+      "label": "Image 3",
+      "ratio": "9:16"
+    },
+    {
+      "key": "image_4",
+      "type": "image",
+      "label": "Image 4",
+      "ratio": "9:16"
+    },
+    {
+      "key": "text_1",
+      "type": "text",
+      "label": "text 1"
+    }
+  ],
+  "template6": [
+    {
+      "key": "image_1",
+      "type": "image",
+      "label": "Image 1",
+      "ratio": "9:16"
+    },
+    {
+      "key": "image_2",
+      "type": "image",
+      "label": "Image 2",
+      "ratio": "9:16"
+    },
+    {
+      "key": "tagline",
+      "type": "tagline",
+      "label": "tagline"
+    }
+  ],
+  "tmpl1": [
+    {
+      "key": "image_1",
+      "type": "image",
+      "label": "Image 1",
+      "ratio": "9:16"
+    },
+    {
+      "key": "image_2",
+      "type": "image",
+      "label": "Image 2",
+      "ratio": "9:16"
+    },
+    {
+      "key": "text_1",
+      "type": "text",
+      "label": "text 1"
+    }
+  ],
+  "hair": [
+    { "key": "image_1", "type": "image", "label": "Main Image", "ratio": "9:16" },
+    { "key": "image_2", "type": "image", "label": "Gallery 1", "ratio": "9:16" },
+    { "key": "image_3", "type": "image", "label": "Gallery 2", "ratio": "9:16" },
+    { "key": "text_1", "type": "text", "label": "text 1" }
+  ],
+  "mockup": [
+    { "key": "image_1", "type": "upload", "label": "Upload Screenshot", "ratio": "9:16" },
+    { "key": "image_2", "type": "upload", "label": "Vector Overlay", "ratio": "9:16" },
+    { "key": "text_1", "type": "text", "label": "text 1" }
+  ],
+  "i2i": [
+    { "key": "image_1", "type": "image", "label": "Main Image", "ratio": "9:16" },
+    { "key": "image_2", "type": "image", "label": "Bottom Image", "ratio": "9:16" },
+    { "key": "text_1", "type": "text", "label": "text 1" }
+  ],
+  "multistyle": [
+    { "key": "image_1", "type": "image", "label": "Photo 1", "ratio": "9:16" },
+    { "key": "image_2", "type": "image", "label": "Photo 2", "ratio": "9:16" },
+    { "key": "image_3", "type": "image", "label": "Photo 3", "ratio": "9:16" },
+    { "key": "image_4", "type": "image", "label": "Photo 4", "ratio": "9:16" },
+    { "key": "image_5", "type": "image", "label": "Photo 5", "ratio": "9:16" },
+    { "key": "image_6", "type": "image", "label": "Photo 6", "ratio": "9:16" },
+    { "key": "image_7", "type": "image", "label": "Photo 7", "ratio": "9:16" },
+    { "key": "image_8", "type": "image", "label": "Photo 8", "ratio": "9:16" },
+    { "key": "text_1", "type": "text", "label": "text 1" }
+  ],
+  "filter": [
+    { "key": "image_1", "type": "image", "label": "Main Image", "ratio": "9:16" },
+    { "key": "text_1", "type": "text", "label": "text 1" }
+  ],
+  "2i2i": [
+    { "key": "image_1", "type": "image", "label": "Main Image", "ratio": "9:16" },
+    { "key": "image_2", "type": "image", "label": "Side Image 1", "ratio": "9:16" },
+    { "key": "image_3", "type": "image", "label": "Side Image 2", "ratio": "9:16" },
+    { "key": "text_1", "type": "text", "label": "text 1" }
+  ],
+  "2i2i1": [
+    { "key": "image_1", "type": "image", "label": "Main Image", "ratio": "9:16" },
+    { "key": "image_2", "type": "image", "label": "Circle Image 1", "ratio": "9:16" },
+    { "key": "image_3", "type": "image", "label": "Circle Image 2", "ratio": "9:16" },
+    { "key": "text_1", "type": "text", "label": "text 1" }
+  ],
+  "makeup": [
+    { "key": "image_1", "type": "image", "label": "Top Image", "ratio": "9:16" },
+    { "key": "image_2", "type": "image", "label": "Bottom Image", "ratio": "9:16" },
+    { "key": "text_1", "type": "text", "label": "text 1" }
+  ],
+  "ti2v": [
+    { "key": "image_1", "type": "image", "label": "Main Image", "ratio": "9:16" },
+    { "key": "image_2", "type": "image", "label": "Circle Image", "ratio": "9:16" },
+    { "key": "text_1", "type": "text", "label": "text 1" },
+    { "key": "description", "type": "text", "label": "description" }
+  ],
+  "i2i1": [
+    { "key": "image_1", "type": "image", "label": "Main Image", "ratio": "9:16" },
+    { "key": "image_2", "type": "image", "label": "Circle Image", "ratio": "9:16" },
+    { "key": "text_1", "type": "text", "label": "text 1" }
+  ]
+}

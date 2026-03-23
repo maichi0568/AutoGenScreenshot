@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHIPM - Screenshot Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ===== RESET & BASE ===== */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#09090b;--bg2:#111113;--bg3:#18181b;--bg4:#27272a;
+  --border:#27272a;--border2:#3f3f46;
+  --text:#fafafa;--text2:#a1a1aa;--text3:#71717a;
+  --accent:#f06060;--accent2:#ff8585;--accent-bg:rgba(240,96,96,.1);--accent-border:rgba(240,96,96,.25);
+  --green:#22c55e;--blue:#3b82f6;--yellow:#eab308;--purple:#a855f7;
+  --radius:12px;--radius-sm:8px;--radius-lg:16px;
+  --shadow:0 8px 32px rgba(0,0,0,.4);
+  --transition:all .2s ease;
+}
+body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:inherit;border:none;outline:none}
+input,select,textarea{font-family:inherit;outline:none}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+
+/* ===== SCREEN MANAGEMENT ===== */
+.screen{display:none !important;min-height:100vh;animation:fadeIn .3s ease}
+.screen.active{display:block !important}
+.screen.login-screen.active{display:flex !important}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* ===== LOGIN SCREEN ===== */
+.login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:radial-gradient(ellipse at 50% 0%,rgba(240,96,96,.08) 0%,transparent 60%)}
+.login-box{width:100%;max-width:400px;padding:40px}
+.login-logo{font-size:32px;font-weight:800;background:linear-gradient(135deg,var(--accent),#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px}
+.login-sub{font-size:14px;color:var(--text3);margin-bottom:40px}
+.form-group{margin-bottom:20px}
+.form-group label{display:block;font-size:13px;font-weight:500;color:var(--text2);margin-bottom:6px}
+.form-input{width:100%;padding:12px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px;transition:var(--transition)}
+.form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(240,96,96,.15)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;transition:var(--transition)}
+.btn-primary{background:var(--accent);color:#fff;width:100%}
+.btn-primary:hover{background:#e04040;transform:translateY(-1px)}
+.btn-secondary{background:var(--bg3);border:1px solid var(--border);color:var(--text)}
+.btn-secondary:hover{border-color:var(--border2);background:var(--bg4)}
+.btn-ghost{background:transparent;color:var(--text2);padding:8px 12px}
+.btn-ghost:hover{color:var(--text);background:var(--bg3)}
+.btn-sm{padding:8px 16px;font-size:13px}
+.btn-icon{width:36px;height:36px;padding:0;border-radius:var(--radius-sm);background:var(--bg3);border:1px solid var(--border);color:var(--text2);display:flex;align-items:center;justify-content:center}
+.btn-icon:hover{border-color:var(--border2);color:var(--text)}
+.login-footer{text-align:center;margin-top:20px;font-size:13px;color:var(--text3)}
+.login-footer a{color:var(--accent);font-weight:500}
+
+/* ===== TOP NAVBAR ===== */
+.navbar{position:sticky;top:0;z-index:100;background:rgba(9,9,11,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 32px;height:56px;display:flex;align-items:center;justify-content:space-between}
+.nav-left{display:flex;align-items:center;gap:16px}
+.nav-logo{font-size:18px;font-weight:700;background:linear-gradient(135deg,var(--accent),#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-breadcrumb{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text3)}
+.nav-breadcrumb span{cursor:pointer;transition:var(--transition)}
+.nav-breadcrumb span:hover{color:var(--text)}
+.nav-breadcrumb .sep{color:var(--bg4)}
+.nav-breadcrumb .current{color:var(--text2);font-weight:500}
+.nav-right{display:flex;align-items:center;gap:12px}
+.user-badge{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:var(--radius-sm);background:var(--bg3);font-size:13px;color:var(--text2)}
+.user-avatar{width:24px;height:24px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
+
+/* ===== MAIN CONTENT ===== */
+.main{max-width:1280px;margin:0 auto;padding:32px}
+.page-header{margin-bottom:32px}
+.page-title{font-size:24px;font-weight:700;margin-bottom:4px}
+.page-desc{font-size:14px;color:var(--text3)}
+
+/* ===== TEMPLATE GALLERY GRID ===== */
+.tpl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;max-width:1200px}
+.tpl-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;transition:var(--transition);cursor:pointer}
+.tpl-card:hover{border-color:var(--accent-border);transform:translateY(-4px);box-shadow:var(--shadow)}
+.tpl-preview{width:100%;aspect-ratio:9/16;background:#000;overflow:hidden;position:relative}
+.tpl-preview iframe{border:none;transform-origin:top left;pointer-events:none}
+.tpl-footer{padding:20px 22px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border)}
+.tpl-name{font-size:15px;font-weight:600;color:var(--text)}
+.tpl-size{font-size:12px;color:var(--text3);margin-top:2px}
+.btn-edit{padding:8px 20px;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:10px;color:var(--accent2);font-size:13px;font-weight:600;transition:var(--transition);cursor:pointer}
+.btn-edit:hover{background:rgba(240,96,96,.25);border-color:rgba(240,96,96,.6)}
+@media(max-width:1000px){.tpl-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.tpl-grid{grid-template-columns:1fr}}
+
+/* ===== SCREENSHOT SETS LIST ===== */
+.sets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
+.set-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:var(--transition)}
+.set-card:hover{border-color:var(--accent-border);transform:translateY(-2px);box-shadow:var(--shadow)}
+.set-card-new{border-style:dashed;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;color:var(--text3)}
+.set-card-new:hover{color:var(--accent);border-color:var(--accent-border);background:var(--accent-bg)}
+.set-preview{height:160px;background:var(--bg3);display:flex;gap:4px;padding:12px;overflow:hidden}
+.set-preview-thumb{flex:1;background:var(--bg4);border-radius:6px;overflow:hidden}
+.set-preview-thumb img{width:100%;height:100%;object-fit:cover}
+.set-info{padding:16px}
+.set-name{font-size:15px;font-weight:600;margin-bottom:4px}
+.set-detail{font-size:13px;color:var(--text3);display:flex;gap:12px}
+.set-langs{display:flex;gap:4px;margin-top:8px}
+.lang-tag{padding:2px 8px;background:var(--bg3);border-radius:4px;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase}
+
+/* ===== FEATURE SELECTION ===== */
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px}
+.feature-card{background:var(--bg2);border:2px solid var(--border);border-radius:var(--radius-lg);padding:32px 24px;text-align:center;cursor:pointer;transition:var(--transition)}
+.feature-card:hover{border-color:var(--accent-border);background:var(--accent-bg)}
+.feature-card.selected{border-color:var(--accent);background:var(--accent-bg)}
+.feature-icon{font-size:40px;margin-bottom:16px;display:block}
+.feature-name{font-size:16px;font-weight:600;margin-bottom:4px}
+.feature-desc{font-size:13px;color:var(--text3)}
+
+/* ===== EDITOR SCREEN ===== */
+.editor-layout{display:flex;height:calc(100vh - 56px)}
+.editor-sidebar{width:340px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.editor-sidebar-header{padding:20px;border-bottom:1px solid var(--border)}
+.editor-sidebar-header h3{font-size:15px;font-weight:600;margin-bottom:4px}
+.editor-sidebar-header p{font-size:12px;color:var(--text3)}
+
+.sidebar-section{padding:20px;border-bottom:1px solid var(--border)}
+.sidebar-section-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:12px}
+.sidebar-field{margin-bottom:16px}
+.sidebar-field label{display:block;font-size:13px;color:var(--text2);margin-bottom:6px;font-weight:500}
+.sidebar-field input,.sidebar-field select,.sidebar-field textarea{width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;transition:var(--transition)}
+.sidebar-field input:focus,.sidebar-field select:focus,.sidebar-field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(240,96,96,.1)}
+.sidebar-field textarea{resize:vertical;min-height:60px}
+
+.color-row{display:flex;gap:8px;align-items:center}
+.color-picker{width:40px;height:40px;border:2px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;padding:0;background:none}
+.color-picker::-webkit-color-swatch-wrapper{padding:2px}
+.color-picker::-webkit-color-swatch{border:none;border-radius:4px}
+.color-hex{flex:1}
+
+/* Languages multi-select */
+.lang-selector{display:flex;flex-wrap:wrap;gap:8px}
+.lang-chip{padding:6px 14px;background:var(--bg);border:1px solid var(--border);border-radius:20px;font-size:13px;cursor:pointer;transition:var(--transition);user-select:none}
+.lang-chip:hover{border-color:var(--border2)}
+.lang-chip.active{background:var(--accent-bg);border-color:var(--accent);color:var(--accent2)}
+
+/* Screenshot nav */
+.ss-nav{display:flex;gap:8px;padding:20px;border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0}
+.ss-tab{padding:8px 16px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;transition:var(--transition);white-space:nowrap;display:flex;align-items:center;gap:6px}
+.ss-tab:hover{border-color:var(--border2)}
+.ss-tab.active{background:var(--accent-bg);border-color:var(--accent);color:var(--accent2)}
+.ss-tab .master-badge{font-size:10px;padding:2px 6px;background:var(--accent);color:#fff;border-radius:4px;font-weight:700}
+.ss-tab-add{border-style:dashed;color:var(--text3)}
+.ss-tab-add:hover{color:var(--accent);border-color:var(--accent-border)}
+
+/* Editor canvas */
+.editor-canvas{flex:1;display:flex;flex-direction:column;background:var(--bg);overflow:hidden}
+.canvas-toolbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--bg2)}
+.canvas-toolbar-left{display:flex;align-items:center;gap:12px}
+.canvas-toolbar-right{display:flex;align-items:center;gap:8px}
+.zoom-controls{display:flex;align-items:center;gap:4px;background:var(--bg);border-radius:var(--radius-sm);padding:2px}
+.zoom-btn{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:transparent;color:var(--text2);border:none;cursor:pointer;font-size:14px}
+.zoom-btn:hover{background:var(--bg3);color:var(--text)}
+.zoom-label{font-size:12px;color:var(--text3);min-width:40px;text-align:center}
+.canvas-area{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:40px;background:repeating-conic-gradient(var(--bg3) 0% 25%, var(--bg) 0% 50%) 0 0/24px 24px}
+.preview-frame{background:#000;border-radius:4px;box-shadow:var(--shadow);overflow:hidden;transition:var(--transition)}
+.preview-frame iframe{border:none;display:block}
+
+/* Template selector */
+.template-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.template-thumb{aspect-ratio:9/16;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;cursor:pointer;transition:var(--transition);position:relative}
+.template-thumb:hover{border-color:var(--border2)}
+.template-thumb.selected{border-color:var(--accent)}
+.template-thumb img{width:100%;height:100%;object-fit:cover}
+.template-thumb .name{position:absolute;bottom:0;left:0;right:0;padding:6px 8px;background:linear-gradient(transparent,rgba(0,0,0,.8));font-size:11px;color:#fff}
+
+/* ===== EXPORT SCREEN ===== */
+.export-panel{max-width:800px;margin:0 auto}
+.export-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px;margin-bottom:20px}
+.export-title{font-size:18px;font-weight:600;margin-bottom:4px}
+.export-desc{font-size:14px;color:var(--text3);margin-bottom:24px}
+.export-tree{font-family:'Fira Code',monospace;font-size:13px;color:var(--text2);line-height:1.8;background:var(--bg);padding:20px;border-radius:var(--radius-sm);border:1px solid var(--border)}
+.export-progress{margin-top:20px}
+.progress-bar{height:8px;background:var(--bg);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:4px;transition:width .3s ease}
+.progress-text{font-size:13px;color:var(--text3);margin-top:8px;display:flex;justify-content:space-between}
+.export-results{margin-top:24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.export-result-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden}
+.export-result-img{aspect-ratio:9/16;background:var(--bg3)}
+.export-result-img img{width:100%;height:100%;object-fit:cover}
+.export-result-info{padding:10px;font-size:12px}
+.export-result-info .lang{font-weight:600;text-transform:uppercase}
+.export-result-info .file{color:var(--text3)}
+
+/* ===== MODAL ===== */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);width:100%;max-width:480px;padding:32px;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+.modal h2{font-size:20px;font-weight:700;margin-bottom:4px}
+.modal p{font-size:14px;color:var(--text3);margin-bottom:24px}
+.modal-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:24px}
+
+/* ===== TOAST ===== */
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 20px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;z-index:300;animation:slideUp .3s ease;box-shadow:var(--shadow)}
+.toast.success{border-color:var(--green);color:var(--green)}
+.toast.error{border-color:var(--accent);color:var(--accent)}
+
+/* ===== EMPTY STATE ===== */
+.empty-state{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty-state .icon{font-size:48px;margin-bottom:16px;opacity:.5}
+.empty-state h3{font-size:18px;color:var(--text2);margin-bottom:8px}
+.empty-state p{font-size:14px;margin-bottom:24px}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  .navbar{padding:0 16px}
+  .main{padding:20px 16px}
+  .editor-layout{flex-direction:column}
+  .editor-sidebar{width:100%;max-height:50vh}
+  .projects-grid,.feature-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ========== SCREEN: LOGIN ========== -->
+<div id="screen-login" class="screen login-screen">
+  <div class="login-box">
+    <div class="login-logo">CHIPM</div>
+    <div class="login-sub">App Store Screenshot Generator</div>
+    <div id="login-form">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="login-email" class="form-input" placeholder="your@email.com" value="demo@chipm.io">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-pass" class="form-input" placeholder="Enter password" value="demo123">
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()">Sign In</button>
+      <div class="login-footer">
+        Don't have an account? <a href="#" onclick="toggleAuth(event)">Sign up</a>
+      </div>
+    </div>
+    <div id="signup-form" style="display:none">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="signup-name" class="form-input" placeholder="Your name">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="signup-email" class="form-input" placeholder="your@email.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="signup-pass" class="form-input" placeholder="Create password">
+      </div>
+      <button class="btn btn-primary" onclick="doSignup()">Create Account</button>
+      <div class="login-footer">
+        Already have an account? <a href="#" onclick="toggleAuth(event)">Sign in</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SCREEN: PROJECTS (Template Gallery) ========== -->
+<div id="screen-projects" class="screen active">
+  <nav class="navbar">
+    <div class="nav-left">
+      <div class="nav-logo">CHIPM</div>
+      <div class="nav-breadcrumb">
+        <span class="current">Templates</span>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="user-badge">
+        <div class="user-avatar" id="user-avatar">D</div>
+        <span id="user-name-display">Demo</span>
+      </div>
+      <button class="btn-icon" onclick="doLogout()" title="Logout">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </nav>
+  <div class="main">
+    <div class="page-header" style="display:flex;justify-content:space-between;align-items:start">
+      <div>
+        <div class="page-title">Templates</div>
+        <div class="page-desc">Select a template and click Edit to start generating screenshots</div>
+      </div>
+    </div>
+    <div class="tpl-grid" id="tpl-grid"></div>
+  </div>
+</div>
+
+<!-- ========== SCREEN: PROJECT DETAIL (Screenshot Sets) ========== -->
+<div id="screen-sets" class="screen">
+  <nav class="navbar">
+    <div class="nav-left">
+      <div class="nav-logo">CHIPM</div>
+      <div class="nav-breadcrumb">
+        <span onclick="showScreen('projects')">Projects</span>
+        <span class="sep">/</span>
+        <span class="current" id="sets-project-name">Project Name</span>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="user-badge">
+        <div class="user-avatar" id="user-avatar2">D</div>
+        <span id="user-name-display2">Demo</span>
+      </div>
+    </div>
+  </nav>
+  <div class="main">
+    <div class="page-header" style="display:flex;justify-content:space-between;align-items:start">
+      <div>
+        <div class="page-title" id="sets-title">Screenshot Sets</div>
+        <div class="page-desc" id="sets-desc">Manage screenshot sets for this project</div>
+      </div>
+      <button class="btn btn-secondary" onclick="showScreen('projects')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
+        Back
+      </button>
+    </div>
+    <div class="sets-grid" id="sets-grid"></div>
+  </div>
+</div>
+
+<!-- ========== SCREEN: FEATURE SELECTION ========== -->
+<div id="screen-feature" class="screen">
+  <nav class="navbar">
+    <div class="nav-left">
+      <div class="nav-logo">CHIPM</div>
+      <div class="nav-breadcrumb">
+        <span onclick="showScreen('projects')">Projects</span>
+        <span class="sep">/</span>
+        <span onclick="showScreen('sets')" id="feat-project-name">Project</span>
+        <span class="sep">/</span>
+        <span class="current">New Screenshot Set</span>
+      </div>
+    </div>
+    <div class="nav-right"></div>
+  </nav>
+  <div class="main">
+    <div class="page-header">
+      <div class="page-title">Select Feature</div>
+      <div class="page-desc">Choose the app feature for this screenshot set</div>
+    </div>
+    <div class="feature-grid" id="feature-grid"></div>
+    <div style="margin-top:32px;display:flex;justify-content:flex-end;gap:12px">
+      <button class="btn btn-secondary" onclick="showScreen('sets')">Cancel</button>
+      <button class="btn btn-primary" id="btn-feature-next" onclick="onFeatureSelected()" disabled>Next</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SCREEN: EDITOR ========== -->
+<div id="screen-editor" class="screen">
+  <nav class="navbar">
+    <div class="nav-left">
+      <div class="nav-logo">CHIPM</div>
+      <div class="nav-breadcrumb">
+        <span onclick="showScreen('projects')">Projects</span>
+        <span class="sep">/</span>
+        <span onclick="showScreen('sets')" id="editor-project-name">Project</span>
+        <span class="sep">/</span>
+        <span class="current" id="editor-set-name">Editing</span>
+      </div>
+    </div>
+    <div class="nav-right">
+      <button class="btn btn-secondary btn-sm" onclick="showScreen('sets')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
+        Back
+      </button>
+      <button class="btn btn-primary btn-sm" onclick="startExport()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export All
+      </button>
+    </div>
+  </nav>
+  <div class="editor-layout">
+    <!-- Sidebar -->
+    <div class="editor-sidebar">
+      <!-- Screenshot tabs -->
+      <div class="ss-nav" id="ss-nav"></div>
+
+      <!-- Master config (SS1) -->
+      <div id="master-config">
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Global Configuration</div>
+          <div class="sidebar-field">
+            <label>Background Color</label>
+            <div class="color-row">
+              <input type="color" class="color-picker" id="global-color" value="#FFAA33" onchange="onGlobalColorChange(this.value)">
+              <input type="text" class="form-input color-hex" id="global-color-hex" value="#FFAA33" onchange="onGlobalColorChange(this.value)">
+            </div>
+          </div>
+          <div class="sidebar-field">
+            <label>Languages</label>
+            <div class="lang-selector" id="lang-selector"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Per-screenshot config -->
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Template</div>
+        <div class="template-grid" id="template-grid"></div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Content</div>
+        <div class="sidebar-field">
+          <label>Title Line 1</label>
+          <input type="text" class="form-input" id="ss-title1" placeholder="Title line 1" oninput="onContentChange()">
+        </div>
+        <div class="sidebar-field">
+          <label>Title Line 2</label>
+          <input type="text" class="form-input" id="ss-title2" placeholder="Title line 2" oninput="onContentChange()">
+        </div>
+        <div class="sidebar-field">
+          <label>Main Image URL</label>
+          <input type="text" class="form-input" id="ss-main-img" placeholder="https://..." oninput="onContentChange()">
+        </div>
+        <div class="sidebar-field">
+          <label>Before Image URL</label>
+          <input type="text" class="form-input" id="ss-before-img" placeholder="https://..." oninput="onContentChange()">
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Style Override</div>
+        <div class="sidebar-field">
+          <label>Override Color (leave empty to use global)</label>
+          <div class="color-row">
+            <input type="color" class="color-picker" id="ss-color" value="#FFAA33" onchange="onSSColorChange(this.value)">
+            <input type="text" class="form-input color-hex" id="ss-color-hex" placeholder="Use global" oninput="onSSColorChange(this.value)">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Canvas -->
+    <div class="editor-canvas">
+      <div class="canvas-toolbar">
+        <div class="canvas-toolbar-left">
+          <span style="font-size:13px;color:var(--text3)" id="canvas-size-label">1080 x 1920 px</span>
+        </div>
+        <div class="canvas-toolbar-right">
+          <div class="zoom-controls">
+            <button class="zoom-btn" onclick="changeZoom(-0.05)">-</button>
+            <span class="zoom-label" id="zoom-label">30%</span>
+            <button class="zoom-btn" onclick="changeZoom(0.05)">+</button>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="refreshPreview()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Refresh
+          </button>
+        </div>
+      </div>
+      <div class="canvas-area" id="canvas-area">
+        <div class="preview-frame" id="preview-frame">
+          <iframe id="preview-iframe"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SCREEN: EXPORT ========== -->
+<div id="screen-export" class="screen">
+  <nav class="navbar">
+    <div class="nav-left">
+      <div class="nav-logo">CHIPM</div>
+      <div class="nav-breadcrumb">
+        <span onclick="showScreen('projects')">Projects</span>
+        <span class="sep">/</span>
+        <span onclick="showScreen('sets')" id="export-project-name">Project</span>
+        <span class="sep">/</span>
+        <span class="current">Export</span>
+      </div>
+    </div>
+    <div class="nav-right">
+      <button class="btn btn-secondary btn-sm" onclick="showScreen('editor')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
+        Back to Editor
+      </button>
+    </div>
+  </nav>
+  <div class="main">
+    <div class="export-panel">
+      <div class="export-card">
+        <div class="export-title">Generating Screenshots</div>
+        <div class="export-desc" id="export-status-text">Preparing export...</div>
+        <div class="export-progress">
+          <div class="progress-bar"><div class="progress-fill" id="export-progress-fill" style="width:0%"></div></div>
+          <div class="progress-text">
+            <span id="export-progress-label">0%</span>
+            <span id="export-progress-detail">0 / 0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="export-card">
+        <div class="export-title">Output Structure</div>
+        <div class="export-tree" id="export-tree"></div>
+      </div>
+
+      <div id="export-results-container" style="display:none">
+        <div class="export-card">
+          <div class="export-title">Generated Screenshots</div>
+          <div class="export-desc">Click any screenshot to download</div>
+          <div class="export-results" id="export-results"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MODAL: New Project ========== -->
+<div id="modal-project" class="modal-overlay" style="display:none">
+  <div class="modal">
+    <h2>New Project</h2>
+    <p>Create a new screenshot generation project</p>
+    <div class="form-group">
+      <label>Project Name</label>
+      <input type="text" id="new-project-name" class="form-input" placeholder="e.g., MyApp v2.0">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-project')">Cancel</button>
+      <button class="btn btn-primary" onclick="createProject()">Create Project</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+const APP = {
+  user: null,
+  projects: [],
+  currentProject: null,
+  currentSet: null,
+  currentSSIndex: 0,
+  zoom: 0.3,
+  selectedFeature: null,
+  selectedLangs: ['en'],
+};
+
+const FEATURES = [
+  { id: 'hair_style', name: 'Hair Style', desc: 'AI hairstyle transformation', icon: '💇' },
+  { id: 'ai_avatar', name: 'AI Avatar', desc: 'Generate AI-powered avatars', icon: '🤖' },
+  { id: 'photo_enhance', name: 'Photo Enhance', desc: 'AI photo enhancement & filters', icon: '✨' },
+  { id: 'background_remove', name: 'Background Remove', desc: 'AI background removal', icon: '🖼' },
+  { id: 'face_swap', name: 'Face Swap', desc: 'AI face swapping', icon: '🎭' },
+  { id: 'age_transform', name: 'Age Transform', desc: 'AI age progression/regression', icon: '⏳' },
+];
+
+const LANGUAGES = [
+  { code: 'en', name: 'English', flag: '🇬🇧' },
+  { code: 'ja', name: 'Japanese', flag: '🇯🇵' },
+  { code: 'vi', name: 'Vietnamese', flag: '🇻🇳' },
+  { code: 'ko', name: 'Korean', flag: '🇰🇷' },
+  { code: 'zh', name: 'Chinese', flag: '🇨🇳' },
+  { code: 'th', name: 'Thai', flag: '🇹🇭' },
+  { code: 'de', name: 'German', flag: '🇩🇪' },
+  { code: 'fr', name: 'French', flag: '🇫🇷' },
+  { code: 'es', name: 'Spanish', flag: '🇪🇸' },
+  { code: 'pt', name: 'Portuguese', flag: '🇧🇷' },
+];
+
+let availableTemplates = [];
+
+// ===== SCREEN MANAGEMENT =====
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  if (name === 'projects') renderProjects();
+  if (name === 'sets') renderSets();
+  if (name === 'feature') renderFeatures();
+  if (name === 'editor') initEditor();
+}
+
+// ===== AUTH =====
+function toggleAuth(e) {
+  e.preventDefault();
+  const lf = document.getElementById('login-form');
+  const sf = document.getElementById('signup-form');
+  lf.style.display = lf.style.display === 'none' ? '' : 'none';
+  sf.style.display = sf.style.display === 'none' ? '' : 'none';
+}
+
+function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  if (!email) return toast('Please enter email', 'error');
+  APP.user = { email, name: email.split('@')[0] };
+  loadUserData();
+  updateUserDisplay();
+  showScreen('projects');
+}
+
+function doSignup() {
+  const name = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  if (!name || !email) return toast('Please fill all fields', 'error');
+  APP.user = { email, name };
+  loadUserData();
+  updateUserDisplay();
+  showScreen('projects');
+}
+
+function doLogout() {
+  APP.user = null;
+  showScreen('login');
+}
+
+function updateUserDisplay() {
+  if (!APP.user) return;
+  const initial = APP.user.name.charAt(0).toUpperCase();
+  document.querySelectorAll('[id^=user-avatar]').forEach(el => el.textContent = initial);
+  document.querySelectorAll('[id^=user-name-display]').forEach(el => el.textContent = APP.user.name);
+}
+
+function loadUserData() {
+  // Load from localStorage
+  const key = 'chipm_' + APP.user.email;
+  const saved = localStorage.getItem(key);
+  if (saved) {
+    APP.projects = JSON.parse(saved);
+  } else {
+    // Demo data
+    APP.projects = [
+      {
+        id: 'p1', name: 'PhotoAI Pro',
+        sets: [
+          {
+            id: 's1', feature: 'hair_style', languages: ['en', 'ja'], global_color: '#FF6B35',
+            screenshots: [
+              { id: 'ss1', template_code: 'tmpl1', title_line1: 'Transform Your', title_line2: 'Hair Style', main_image: '', before_image: '', color_override: '' },
+              { id: 'ss2', template_code: 'tmpl1', title_line1: 'AI-Powered', title_line2: 'Hair Magic', main_image: '', before_image: '', color_override: '' },
+            ]
+          }
+        ]
+      }
+    ];
+  }
+}
+
+function saveUserData() {
+  if (!APP.user) return;
+  localStorage.setItem('chipm_' + APP.user.email, JSON.stringify(APP.projects));
+}
+
+// ===== TEMPLATE DEFINITIONS =====
+const TEMPLATE_LIST = [
+  { code: 't1',        name: 'Template 1',         w: 1080, h: 1920 },
+  { code: 't2',        name: 'Template 2',         w: 1080, h: 1920 },
+  { code: 't3',        name: 'Template 3',         w: 1080, h: 1920 },
+  { code: 'tmpl1',     name: 'Template 1 (New)',    w: 1080, h: 1920 },
+  { code: 'tmpl4',     name: 'Template 4',         w: 1080, h: 1920 },
+  { code: 'template2', name: 'Template 2 (Figma)',  w: 1080, h: 1920 },
+  { code: 'figma1',    name: 'Figma 1',            w: 1080, h: 1920 },
+  { code: 'restyle',   name: 'Restyle',            w: 1242, h: 2688 },
+  { code: 'lifestyle', name: 'Lifestyle',          w: 1242, h: 2688 },
+  { code: 'minimal',   name: 'Minimal',            w: 1242, h: 2688 },
+  { code: 'bold',      name: 'Bold',               w: 1242, h: 2688 },
+];
+
+// ===== PROJECTS (Template Gallery) =====
+function renderProjects() {
+  const grid = document.getElementById('tpl-grid');
+  grid.innerHTML = TEMPLATE_LIST.map(t => `
+    <div class="tpl-card">
+      <div class="tpl-preview" id="tpl-box-${t.code}"></div>
+      <div class="tpl-footer">
+        <div>
+          <div class="tpl-name">${esc(t.name)}</div>
+          <div class="tpl-size">${t.w} x ${t.h} px</div>
+        </div>
+        <button class="btn-edit" onclick="editTemplate('${t.code}')">&#9998; Edit</button>
+      </div>
+    </div>
+  `).join('');
+
+  // Load iframe previews after DOM update
+  requestAnimationFrame(() => {
+    TEMPLATE_LIST.forEach(t => {
+      const box = document.getElementById('tpl-box-' + t.code);
+      if (!box) return;
+      const boxW = box.clientWidth;
+      const scale = boxW / t.w;
+      box.style.height = (t.h * scale) + 'px';
+
+      const iframe = document.createElement('iframe');
+      iframe.style.width = t.w + 'px';
+      iframe.style.height = t.h + 'px';
+      iframe.style.transform = `scale(${scale})`;
+      iframe.sandbox = 'allow-same-origin allow-scripts';
+      iframe.src = `/preview/${t.code}`;
+      box.appendChild(iframe);
+    });
+  });
+}
+
+function editTemplate(code) {
+  const tpl = TEMPLATE_LIST.find(t => t.code === code);
+  if (!tpl) return;
+
+  // Ensure default project exists
+  if (!APP.currentProject) {
+    if (!APP.projects.length) {
+      APP.projects.push({ id: 'p_default', name: 'My Project', sets: [] });
+    }
+    APP.currentProject = APP.projects[0];
+  }
+
+  // Create a set for this template
+  const set = {
+    id: 's' + Date.now(),
+    feature: code,
+    languages: ['en'],
+    global_color: '#FFAA33',
+    screenshots: [
+      { id: 'ss_1', template_code: code, title_line1: 'Restyle Photos', title_line2: 'With AI Magic', main_image: '', before_image: '', color_override: '' }
+    ]
+  };
+  APP.currentProject.sets.push(set);
+  APP.currentSet = set;
+  APP.currentSSIndex = 0;
+  saveUserData();
+  showScreen('editor');
+}
+
+function createProject() {
+  const name = document.getElementById('new-project-name').value.trim();
+  if (!name) return toast('Please enter a project name', 'error');
+  const project = { id: 'p' + Date.now(), name, sets: [] };
+  APP.projects.push(project);
+  saveUserData();
+  closeModal('modal-project');
+  document.getElementById('new-project-name').value = '';
+  renderProjects();
+  toast('Project created!', 'success');
+}
+
+function openProject(id) {
+  APP.currentProject = APP.projects.find(p => p.id === id);
+  if (!APP.currentProject) return;
+  showScreen('sets');
+}
+
+// ===== SCREENSHOT SETS =====
+function renderSets() {
+  if (!APP.currentProject) return;
+  const p = APP.currentProject;
+  document.getElementById('sets-project-name').textContent = p.name;
+  document.getElementById('sets-title').textContent = p.name;
+  document.getElementById('sets-desc').textContent = `${p.sets.length} screenshot set${p.sets.length !== 1 ? 's' : ''}`;
+
+  const grid = document.getElementById('sets-grid');
+  let html = `<div class="set-card set-card-new" onclick="startNewSet()">
+    <div class="icon" style="font-size:32px;margin-bottom:8px">+</div>
+    <div class="label" style="font-size:14px;font-weight:500">Create New Screenshot Set</div>
+  </div>`;
+
+  p.sets.forEach(s => {
+    const ssCount = s.screenshots ? s.screenshots.length : 0;
+    html += `<div class="set-card" onclick="openSet('${s.id}')">
+      <div class="set-preview">
+        ${(s.screenshots || []).slice(0, 3).map(() => `<div class="set-preview-thumb"></div>`).join('')}
+      </div>
+      <div class="set-info">
+        <div class="set-name">${esc(s.feature.replace(/_/g, ' '))} Set</div>
+        <div class="set-detail">
+          <span>${ssCount} screenshots</span>
+          <span style="color:${s.global_color || '#fff'}">● ${s.global_color || 'No color'}</span>
+        </div>
+        <div class="set-langs">
+          ${(s.languages || []).map(l => `<span class="lang-tag">${l}</span>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  });
+  grid.innerHTML = html;
+}
+
+function startNewSet() {
+  APP.selectedFeature = null;
+  showScreen('feature');
+}
+
+function openSet(id) {
+  APP.currentSet = APP.currentProject.sets.find(s => s.id === id);
+  if (!APP.currentSet) return;
+  APP.currentSSIndex = 0;
+  showScreen('editor');
+}
+
+// ===== FEATURE SELECTION =====
+function renderFeatures() {
+  if (!APP.currentProject) return;
+  document.getElementById('feat-project-name').textContent = APP.currentProject.name;
+  const grid = document.getElementById('feature-grid');
+  grid.innerHTML = FEATURES.map(f => `
+    <div class="feature-card" id="feat-${f.id}" onclick="selectFeature('${f.id}')">
+      <span class="feature-icon">${f.icon}</span>
+      <div class="feature-name">${f.name}</div>
+      <div class="feature-desc">${f.desc}</div>
+    </div>
+  `).join('');
+  document.getElementById('btn-feature-next').disabled = true;
+}
+
+function selectFeature(id) {
+  APP.selectedFeature = id;
+  document.querySelectorAll('.feature-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('feat-' + id).classList.add('selected');
+  document.getElementById('btn-feature-next').disabled = false;
+}
+
+function onFeatureSelected() {
+  if (!APP.selectedFeature) return;
+  // Create new set
+  const set = {
+    id: 's' + Date.now(),
+    feature: APP.selectedFeature,
+    languages: ['en'],
+    global_color: '#FFAA33',
+    screenshots: [
+      { id: 'ss_1', template_code: 'tmpl1', title_line1: 'Amazing', title_line2: 'Feature', main_image: '', before_image: '', color_override: '' }
+    ]
+  };
+  APP.currentProject.sets.push(set);
+  APP.currentSet = set;
+  APP.currentSSIndex = 0;
+  saveUserData();
+  showScreen('editor');
+}
+
+// ===== EDITOR =====
+async function initEditor() {
+  if (!APP.currentSet || !APP.currentProject) return;
+
+  document.getElementById('editor-project-name').textContent = APP.currentProject ? APP.currentProject.name : 'Project';
+  const tplInfo = TEMPLATE_LIST.find(t => t.code === APP.currentSet.feature);
+  document.getElementById('editor-set-name').textContent = tplInfo ? tplInfo.name : APP.currentSet.feature;
+
+  // Load templates
+  if (!availableTemplates.length) {
+    try {
+      const res = await fetch('/api/templates');
+      availableTemplates = await res.json();
+    } catch { availableTemplates = []; }
+  }
+
+  renderSSNav();
+  renderLanguageSelector();
+  renderTemplateGrid();
+  loadSSData();
+  updatePreview();
+  updateMasterConfigVisibility();
+}
+
+function renderSSNav() {
+  const nav = document.getElementById('ss-nav');
+  const ss = APP.currentSet.screenshots;
+  let html = ss.map((s, i) => `
+    <div class="ss-tab ${i === APP.currentSSIndex ? 'active' : ''}" onclick="switchSS(${i})">
+      SS${i + 1}
+      ${i === 0 ? '<span class="master-badge">MASTER</span>' : ''}
+    </div>
+  `).join('');
+  html += `<div class="ss-tab ss-tab-add" onclick="addScreenshot()">+ Add</div>`;
+  nav.innerHTML = html;
+}
+
+function switchSS(index) {
+  // Save current
+  saveCurrentSS();
+  APP.currentSSIndex = index;
+  renderSSNav();
+  loadSSData();
+  updatePreview();
+  updateMasterConfigVisibility();
+}
+
+function addScreenshot() {
+  const ss = APP.currentSet.screenshots;
+  const master = ss[0];
+  const newSS = {
+    id: 'ss_' + (ss.length + 1),
+    template_code: master.template_code,
+    title_line1: master.title_line1,
+    title_line2: master.title_line2,
+    main_image: master.main_image,
+    before_image: master.before_image,
+    color_override: ''
+  };
+  ss.push(newSS);
+  APP.currentSSIndex = ss.length - 1;
+  saveUserData();
+  renderSSNav();
+  loadSSData();
+  updatePreview();
+  updateMasterConfigVisibility();
+}
+
+function updateMasterConfigVisibility() {
+  const masterConfig = document.getElementById('master-config');
+  masterConfig.style.display = APP.currentSSIndex === 0 ? '' : 'none';
+}
+
+function renderLanguageSelector() {
+  const container = document.getElementById('lang-selector');
+  container.innerHTML = LANGUAGES.map(l => `
+    <div class="lang-chip ${APP.currentSet.languages.includes(l.code) ? 'active' : ''}"
+         onclick="toggleLang('${l.code}')">
+      ${l.flag} ${l.code.toUpperCase()}
+    </div>
+  `).join('');
+}
+
+function toggleLang(code) {
+  const langs = APP.currentSet.languages;
+  const idx = langs.indexOf(code);
+  if (idx >= 0) {
+    if (langs.length <= 1) return toast('At least one language required', 'error');
+    langs.splice(idx, 1);
+  } else {
+    langs.push(code);
+  }
+  saveUserData();
+  renderLanguageSelector();
+}
+
+function renderTemplateGrid() {
+  const grid = document.getElementById('template-grid');
+  const templates = ['t1', 't2', 't3', 'tmpl1', 'tmpl4', 'restyle', 'lifestyle', 'minimal', 'bold'];
+  const currentSS = APP.currentSet.screenshots[APP.currentSSIndex];
+  grid.innerHTML = templates.map(t => `
+    <div class="template-thumb ${currentSS && currentSS.template_code === t ? 'selected' : ''}"
+         onclick="selectTemplate('${t}')">
+      <div style="width:100%;height:100%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text3)">${t}</div>
+    </div>
+  `).join('');
+}
+
+function selectTemplate(code) {
+  const ss = APP.currentSet.screenshots[APP.currentSSIndex];
+  if (ss) ss.template_code = code;
+  saveUserData();
+  renderTemplateGrid();
+  updatePreview();
+}
+
+function loadSSData() {
+  const ss = APP.currentSet.screenshots[APP.currentSSIndex];
+  if (!ss) return;
+  document.getElementById('ss-title1').value = ss.title_line1 || '';
+  document.getElementById('ss-title2').value = ss.title_line2 || '';
+  document.getElementById('ss-main-img').value = ss.main_image || '';
+  document.getElementById('ss-before-img').value = ss.before_image || '';
+  document.getElementById('ss-color-hex').value = ss.color_override || '';
+  if (ss.color_override) {
+    document.getElementById('ss-color').value = ss.color_override;
+  }
+  // Global
+  document.getElementById('global-color').value = APP.currentSet.global_color || '#FFAA33';
+  document.getElementById('global-color-hex').value = APP.currentSet.global_color || '#FFAA33';
+}
+
+function saveCurrentSS() {
+  const ss = APP.currentSet.screenshots[APP.currentSSIndex];
+  if (!ss) return;
+  ss.title_line1 = document.getElementById('ss-title1').value;
+  ss.title_line2 = document.getElementById('ss-title2').value;
+  ss.main_image = document.getElementById('ss-main-img').value;
+  ss.before_image = document.getElementById('ss-before-img').value;
+  ss.color_override = document.getElementById('ss-color-hex').value;
+  saveUserData();
+}
+
+function onGlobalColorChange(val) {
+  if (val && val.match(/^#[0-9a-fA-F]{6}$/)) {
+    APP.currentSet.global_color = val;
+    document.getElementById('global-color').value = val;
+    document.getElementById('global-color-hex').value = val;
+    saveUserData();
+    updatePreview();
+  }
+}
+
+function onSSColorChange(val) {
+  document.getElementById('ss-color-hex').value = val;
+  if (val && val.match(/^#[0-9a-fA-F]{6}$/)) {
+    document.getElementById('ss-color').value = val;
+  }
+  saveCurrentSS();
+  updatePreview();
+}
+
+function onContentChange() {
+  saveCurrentSS();
+  updatePreview();
+}
+
+// ===== PREVIEW =====
+function updatePreview() {
+  const ss = APP.currentSet.screenshots[APP.currentSSIndex];
+  if (!ss) return;
+  const tpl = ss.template_code || 'tmpl1';
+  const color = ss.color_override || APP.currentSet.global_color || '#FFAA33';
+  const t1 = ss.title_line1 || 'Amazing';
+  const t2 = ss.title_line2 || 'Feature';
+  const mainImg = ss.main_image || 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800&q=80';
+  const beforeImg = ss.before_image || 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=300&q=80';
+
+  // Determine template size
+  const tallTemplates = ['restyle', 'lifestyle', 'minimal', 'bold'];
+  const isTall = tallTemplates.includes(tpl);
+  const w = isTall ? 1242 : 1080;
+  const h = isTall ? 2688 : 1920;
+
+  document.getElementById('canvas-size-label').textContent = `${w} x ${h} px`;
+
+  const iframe = document.getElementById('preview-iframe');
+  iframe.style.width = w + 'px';
+  iframe.style.height = h + 'px';
+
+  const frame = document.getElementById('preview-frame');
+  frame.style.width = (w * APP.zoom) + 'px';
+  frame.style.height = (h * APP.zoom) + 'px';
+
+  iframe.style.transform = `scale(${APP.zoom})`;
+  iframe.style.transformOrigin = 'top left';
+
+  // Build preview URL
+  const previewUrl = `/preview/${tpl}?t1=${encodeURIComponent(t1)}&t2=${encodeURIComponent(t2)}&color=${encodeURIComponent(color)}&main=${encodeURIComponent(mainImg)}&before=${encodeURIComponent(beforeImg)}`;
+  iframe.src = previewUrl;
+}
+
+function changeZoom(delta) {
+  APP.zoom = Math.max(0.1, Math.min(1, APP.zoom + delta));
+  document.getElementById('zoom-label').textContent = Math.round(APP.zoom * 100) + '%';
+  updatePreview();
+}
+
+function refreshPreview() {
+  updatePreview();
+}
+
+// ===== EXPORT =====
+function startExport() {
+  if (!APP.currentSet) return;
+  saveCurrentSS();
+
+  document.getElementById('export-project-name').textContent = APP.currentProject.name;
+  showScreen('export');
+
+  const langs = APP.currentSet.languages;
+  const screenshots = APP.currentSet.screenshots;
+  const total = langs.length * screenshots.length;
+
+  // Build tree
+  let tree = `/export/\n`;
+  langs.forEach(l => {
+    tree += `   /${l}/\n`;
+    screenshots.forEach((_, i) => {
+      tree += `      ss_${i + 1}.png\n`;
+    });
+  });
+  tree += `\n${APP.currentProject.name.replace(/\s/g, '_')}.zip`;
+  document.getElementById('export-tree').textContent = tree;
+
+  // Simulate export progress
+  let done = 0;
+  document.getElementById('export-status-text').textContent = `Generating ${total} screenshots across ${langs.length} language(s)...`;
+  document.getElementById('export-results-container').style.display = 'none';
+
+  const interval = setInterval(() => {
+    done++;
+    const pct = Math.round((done / total) * 100);
+    document.getElementById('export-progress-fill').style.width = pct + '%';
+    document.getElementById('export-progress-label').textContent = pct + '%';
+    document.getElementById('export-progress-detail').textContent = `${done} / ${total}`;
+
+    if (done >= total) {
+      clearInterval(interval);
+      document.getElementById('export-status-text').textContent = 'Export complete!';
+      document.getElementById('export-results-container').style.display = '';
+
+      // Show results
+      const results = document.getElementById('export-results');
+      let rhtml = '';
+      langs.forEach(l => {
+        screenshots.forEach((ss, i) => {
+          rhtml += `<div class="export-result-card">
+            <div class="export-result-img" style="background:${ss.color_override || APP.currentSet.global_color || '#333'}"></div>
+            <div class="export-result-info">
+              <span class="lang">${l}</span> / <span class="file">ss_${i + 1}.png</span>
+            </div>
+          </div>`;
+        });
+      });
+      results.innerHTML = rhtml;
+      toast('Export complete!', 'success');
+    }
+  }, 800);
+}
+
+// ===== MODALS & UTILITIES =====
+function openModal(id) {
+  document.getElementById(id).style.display = 'flex';
+}
+
+function closeModal(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+function toast(msg, type = '') {
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// Close modals on overlay click
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('modal-overlay')) {
+    e.target.style.display = 'none';
+  }
+});
+
+// ===== AUTO-INIT: skip login, go straight to projects =====
+(function autoInit() {
+  APP.user = { email: 'demo@chipm.io', name: 'Demo' };
+  loadUserData();
+  updateUserDisplay();
+  renderProjects();
+})();
+</script>
+</body>
+</html>

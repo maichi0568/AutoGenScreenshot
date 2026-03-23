@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Try New Hairstyles Instantly</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@800&display=swap');
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #000;
+      min-height: 1920px;
+      min-width: 1080px;
+      overflow-x: auto;
+    }
+    .template-bg {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      min-height: 1200px;
+      background: linear-gradient(180deg, #000 20.715%, #ff5858 55.485%, #f9a3a3 99.469%);
+      overflow: hidden;
+      margin: 0 auto;
+      font-family: 'Poppins', Arial, sans-serif;
+    }
+    .main-img-grid {
+      position: absolute;
+      left: calc(50% + 0.5px);
+      top: 368px;
+      transform: translateX(-50%);
+      width: 929px;
+      height: 1694px;
+      border: 10px solid #fe9d9c;
+      border-radius: 100px;
+      overflow: hidden;
+      background: none;
+      z-index: 1;
+    }
+    .img-block {
+      position: absolute;
+      overflow: hidden;
+      border-radius: 0;
+      background: none;
+    }
+    .img-block img {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      pointer-events: none;
+    }
+    .img-block-1 {
+      left: -9px;
+      top: -17px;
+      width: 475px;
+      height: 789px;
+      border: 6.44px solid #686dff;
+    }
+    .img-block-2 {
+      left: -11px;
+      top: 769px;
+      width: 477px;
+      height: 788px;
+      border-left: 6.44px solid #fff0f0;
+      border-top: 6.44px solid #fff0f0;
+      border-right: none;
+      border-bottom: none;
+    }
+    .img-block-3 {
+      left: 463px;
+      top: -17px;
+      width: 478px;
+      height: 789px;
+      border: 6.44px solid #fe9d9c;
+    }
+    .img-block-4 {
+      left: 463px;
+      top: 769px;
+      width: 478px;
+      height: 788px;
+      border-left: 6.44px solid #fff0f0;
+      border-top: 6.44px solid #fff0f0;
+      border-right: none;
+      border-bottom: none;
+    }
+    .img-inner-1,
+    .img-inner-2,
+    .img-inner-3,
+    .img-inner-4 {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    .template-title {
+      position: absolute;
+      left: 50%;
+      top: 182px;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      
+      
+      
+      text-align: center;
+      font-family: 'Poppins', Arial, sans-serif;
+      font-weight: 800;
+      font-size: 87.54px;
+      line-height: 103px;
+      text-transform: capitalize;
+      background: linear-gradient(90deg, #f37878, #ffe9e9);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-fill-color: transparent;
+      white-space: normal; word-wrap: break-word; overflow-wrap: break-word; max-width: 1000px;
+      margin-bottom: 0;
+      z-index: 2;
+    }
+    .template-title p {
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="template-bg" data-name="Template3" data-node-id="27:95">
+    <div class="main-img-grid" data-node-id="27:96">
+      <div class="img-block img-block-1" data-node-id="27:102">
+        <div class="img-inner-1" data-node-id="27:103">
+          <img src="{{image_1}}" alt="">
+        </div>
+      </div>
+      <div class="img-block img-block-2" data-node-id="27:104">
+        <div class="img-inner-2" data-node-id="27:105">
+          <img src="{{image_2}}" alt="">
+        </div>
+      </div>
+      <div class="img-block img-block-3" data-node-id="27:106">
+        <div class="img-inner-3" data-node-id="27:107">
+          <img src="{{image_3}}" alt="">
+        </div>
+      </div>
+      <div class="img-block img-block-4" data-node-id="27:108">
+        <div class="img-inner-4" data-node-id="27:109">
+          <img src="{{image_4}}" alt="">
+        </div>
+      </div>
+    </div>
+    <div class="template-title" data-node-id="27:110">
+      <p>{{tagline}}</p>
+      
+    </div>
+  </div>
+</body>
+</html>

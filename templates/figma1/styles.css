@@ -1,0 +1,152 @@
+/* ═══════════════════════════════════════════════════
+   TEMPLATE: figma1 — Auto-generated từ Figma API
+   File: TzvbtztkUGiQvI1A5ZhozK  |  Canvas: 1080×1920px
+   ════════════════════════════════════════════════ */
+
+:root {
+  /* ── Chỉnh màu tại đây ── */
+  --bg-stop1-color: rgba(0,0,0,1);
+  --bg-stop1-pos:   0%;
+  --bg-stop2-color: rgba(255,88,88,1);
+  --bg-stop2-pos:   44%;
+  --bg-stop3-color: rgba(249,162,162,1);
+  --bg-stop3-pos:   99%;
+
+  --title-size: 87.54px;
+  --title-lh:   103px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; -webkit-font-smoothing: antialiased; }
+
+/* ── Canvas ── */
+.frame {
+  position: relative;
+  width:    1080px;
+  height:   1920px;
+  overflow: hidden;
+  background: linear-gradient(
+    180deg,
+    var(--bg-stop1-color) var(--bg-stop1-pos),
+    var(--bg-stop2-color) var(--bg-stop2-pos),
+    var(--bg-stop3-color) var(--bg-stop3-pos)
+  );
+}
+
+/* ── Title ── */
+/* Figma: x=206, y=78, w=667, h=206 | gradient 90deg #F27777 → #FEE9E8 */
+.title {
+  position:   absolute;
+  top:        78px;
+  left:       206px;
+  width:      667px;
+  height:     206px;
+
+  font-family: 'Poppins', 'Poppins-ExtraBold', 'Helvetica Neue', sans-serif;
+  font-weight: 800;
+  font-size:   var(--title-size);
+  line-height: var(--title-lh);
+  text-align:  center;
+  letter-spacing: 0;
+
+  background: linear-gradient(90deg, rgba(242,119,119,1) 0%, rgba(254,233,232,1) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* ── Main frame ── */
+/* Figma: x=87, y=368, w=906, h=1708 | radius: 80 80 0 0 | stroke 12px gradient */
+.main-frame {
+  position:      absolute;
+  top:           368px;
+  left:          87px;
+  width:         906px;
+  height:        1708px;
+  border-radius: 80px 80px 0 0;
+  overflow:      hidden;
+  background:    #fff;
+}
+
+/* Gradient border dùng ::before + mask — chính xác từ Figma stroke */
+.main-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 12px;
+  border-radius: 80px 80px 0 0;
+  background: linear-gradient(
+    180deg,
+    rgba(254,157,156,1) 0%,
+    rgba(255,240,240,1) 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box,
+                linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.main-image {
+  position: absolute;
+  inset: 0;
+  width:  100%;
+  height: 100%;
+  object-fit:      cover;
+  object-position: center top;
+}
+
+/* ── Circle frame ── */
+/* Figma: x=715, y=438, w=445, h=445 | radius=831 | stroke 6.46px gradient | 2 drop-shadows */
+.circle-frame {
+  position:         absolute;
+  top:              438px;
+  left:             715px;
+  width:            445px;
+  height:           445px;
+  border-radius:    50%;
+  overflow:         hidden;
+  background-color: #bcaf9c;
+  box-shadow:
+    21.01px  25.21px 25.21px rgba(0,0,0,0.10),
+    21px    -27px    25.21px rgba(0,0,0,0.17);
+  z-index: 20;
+}
+
+.circle-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 6.46px;
+  border-radius: 50%;
+  background: linear-gradient(
+    180deg,
+    rgba(254,157,156,1) 0%,
+    rgba(255,240,240,1) 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box,
+                linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.circle-image {
+  width:  100%;
+  height: 100%;
+  object-fit:      cover;
+  object-position: top center;
+}
+
+/* ── Arrow SVG ── */
+/* Figma Group: x=829, y=805, w=237, h=228 */
+.arrow {
+  position: absolute;
+  top:  805px;
+  left: 829px;
+  z-index: 30;
+  pointer-events: none;
+}

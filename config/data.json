@@ -1,0 +1,285 @@
+[
+  {
+    "id": "ai_photo_video",
+    "name": "AI Photo & Video",
+    "icon": "📸",
+    "features": [
+      {
+        "id": "make_up",
+        "name": "Make Up",
+        "desc": "AI makeup & beauty filters",
+        "icon": "💄",
+        "templates": [
+          {
+            "code": "template6",
+            "name": "Template 6",
+            "size": "1080x1920"
+          },
+          {
+            "code": "makeup",
+            "name": "Makeup",
+            "size": "1080x1920"
+          }
+        ]
+      },
+      {
+        "id": "two_image_to_image",
+        "name": "2 Image to Image",
+        "desc": "Transform with two image inputs",
+        "icon": "🔄",
+        "templates": [
+          {
+            "code": "2i2i",
+            "name": "2 Image to 2 Image",
+            "size": "1080x1920"
+          },
+          {
+            "code": "2i2i1",
+            "name": "2 Image to 2 Image (1)",
+            "size": "1080x1920"
+          }
+        ]
+      },
+      {
+        "id": "mockup",
+        "name": "Mockup",
+        "desc": "AI photo mockups",
+        "icon": "📱",
+        "templates": [
+          {
+            "code": "mockup",
+            "name": "Mockup",
+            "size": "1080x1920"
+          }
+        ]
+      },
+      {
+        "id": "text_to_image",
+        "name": "Text to Image",
+        "desc": "Generate images from text prompts",
+        "icon": "🖼",
+        "templates": [
+          {
+            "code": "template5",
+            "name": "Template 5",
+            "size": "1080x1920"
+          }
+        ]
+      },
+      {
+        "id": "text_image_to_video",
+        "name": "Text and Image to Video",
+        "desc": "Generate videos from text and images",
+        "icon": "🎬",
+        "templates": [
+          {
+            "code": "temp2",
+            "name": "Temp 2",
+            "size": "1080x1920"
+          },
+          {
+            "code": "ti2v",
+            "name": "Text/Image to Video",
+            "size": "1080x1920"
+          }
+        ]
+      },
+      {
+        "id": "restyle",
+        "name": "Restyle",
+        "desc": "AI photo restyling & outfit change",
+        "icon": "✨",
+        "templates": [
+          {
+            "code": "tmpl1",
+            "name": "Template 1",
+            "size": "1080x1920"
+          },
+          {
+            "code": "i2i",
+            "name": "Image to Image",
+            "size": "1080x1920"
+          },
+          {
+            "code": "i2i1",
+            "name": "Image to Image (1)",
+            "size": "1080x1920"
+          }
+        ]
+      },
+      {
+        "id": "ai_multi_style",
+        "name": "AI Multi Style",
+        "desc": "Apply multiple AI styles to photos",
+        "icon": "🎨",
+        "templates": [
+          {
+            "code": "template4",
+            "name": "Template 4",
+            "size": "1080x1920"
+          },
+          {
+            "code": "multistyle",
+            "name": "Multi Style",
+            "size": "1080x1920"
+          }
+        ]
+      },
+      {
+        "id": "change_hair_style",
+        "name": "Change Hair Style",
+        "desc": "AI hairstyle transformation",
+        "icon": "💇",
+        "templates": [
+          {
+            "code": "template3",
+            "name": "Template 3",
+            "size": "1080x1920"
+          },
+          {
+            "code": "hair",
+            "name": "Hair Style",
+            "size": "1080x1920"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "caller_id",
+    "name": "Caller ID",
+    "icon": "📞",
+    "features": [
+      {
+        "id": "caller_lookup",
+        "name": "Caller Lookup",
+        "desc": "Identify unknown callers",
+        "icon": "🔍",
+        "templates": [
+          {
+            "code": "bold",
+            "name": "Bold",
+            "size": "1242x2688"
+          },
+          {
+            "code": "minimal",
+            "name": "Minimal",
+            "size": "1242x2688"
+          }
+        ]
+      },
+      {
+        "id": "spam_block",
+        "name": "Spam Blocker",
+        "desc": "Block spam & robocalls",
+        "icon": "🚫",
+        "templates": [
+          {
+            "code": "bold",
+            "name": "Bold",
+            "size": "1242x2688"
+          }
+        ]
+      },
+      {
+        "id": "call_record",
+        "name": "Call Recording",
+        "desc": "Record & transcribe calls",
+        "icon": "🎙",
+        "templates": [
+          {
+            "code": "lifestyle",
+            "name": "Lifestyle",
+            "size": "1242x2688"
+          },
+          {
+            "code": "minimal",
+            "name": "Minimal",
+            "size": "1242x2688"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "utility",
+    "name": "Utility & Tools",
+    "icon": "🛠",
+    "features": [
+      {
+        "id": "vpn",
+        "name": "VPN",
+        "desc": "Secure & private browsing",
+        "icon": "🔒",
+        "templates": [
+          {
+            "code": "bold",
+            "name": "Bold",
+            "size": "1242x2688"
+          },
+          {
+            "code": "lifestyle",
+            "name": "Lifestyle",
+            "size": "1242x2688"
+          }
+        ]
+      },
+      {
+        "id": "cleaner",
+        "name": "Phone Cleaner",
+        "desc": "Storage & memory optimization",
+        "icon": "🧹",
+        "templates": [
+          {
+            "code": "minimal",
+            "name": "Minimal",
+            "size": "1242x2688"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "social",
+    "name": "Social & Entertainment",
+    "icon": "🎭",
+    "features": [
+      {
+        "id": "face_swap",
+        "name": "Face Swap",
+        "desc": "AI face swapping for fun",
+        "icon": "🎭",
+        "templates": [
+          {
+            "code": "template4",
+            "name": "Template 4",
+            "size": "1080x1920"
+          },
+          {
+            "code": "t3",
+            "name": "Template 3",
+            "size": "1080x1920"
+          }
+        ]
+      },
+      {
+        "id": "age_transform",
+        "name": "Age Transform",
+        "desc": "AI age progression/regression",
+        "icon": "⏳",
+        "templates": [
+          {
+            "code": "tmpl1",
+            "name": "Template 1 (New)",
+            "size": "1080x1920"
+          },
+          {
+            "code": "t1",
+            "name": "Template 1",
+            "size": "1080x1920"
+          }
+        ]
+      }
+    ]
+  }
+]

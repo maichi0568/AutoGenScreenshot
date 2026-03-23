@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Apply AI Styles to Photos</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;800&display=swap');
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #000;
+      min-height: 1920px;
+      min-width: 1080px;
+      overflow-x: auto;
+    }
+    .figma-bg {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      margin: 0 auto;
+      background: linear-gradient(180deg, #000 20.715%, #ff5858 55.485%, #f9a3a3 99.469%);
+      overflow: hidden;
+      font-family: 'Poppins', Arial, sans-serif;
+    }
+    .figma-title {
+      position: absolute;
+      left: 50%;
+      top: 181.05px;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: center;
+      font-family: 'Poppins', Arial, sans-serif;
+      font-weight: 800;
+      font-size: 87.54px;
+      line-height: 103px;
+      text-transform: capitalize;
+      background: linear-gradient(90deg, #f37878, #ffe9e9);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-fill-color: transparent;
+      white-space: nowrap;
+      margin-bottom: 0;
+      z-index: 2;
+    }
+    .figma-title p { margin: 0; }
+    .main-img-frame {
+      position: absolute;
+      left: 87px;
+      top: 368px;
+      width: 906px;
+      height: 1708px;
+      border: 12px solid #fe9d9c;
+      border-radius: 80px 80px 0 0;
+      background: none;
+      z-index: 1;
+      /* Figma node 1041-1055: double-check size and radius here if needed */
+      /* Example: width: 914px; height: 1708px; border-radius: 80px 80px 0 0; */
+      /* If you have the exact Figma export, update these values accordingly */
+    }
+    .star {
+      position: absolute;
+      left: 849.28px;
+      top: 488px;
+      width: 49.66px;
+      height: 49.66px;
+      z-index: 3;
+    }
+    .star1 {
+      position: absolute;
+      left: 772.17px;
+      top: 405px;
+      width: 77.11px;
+      height: 77.11px;
+      z-index: 3;
+    }
+    .photo-frame {
+      position: absolute;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    /* Individual photo frames with rotation and border */
+    .photo1 {
+      left: 56px; top: 445.25px; width: 504.03px; height: 635.24px;
+      border-radius: 42.9px; transform: rotate(-3.83deg);
+    }
+    .photo2 {
+      left: 70px; top: 1120.83px; width: 479.71px; height: 679.02px;
+      border-radius: 44.7px; transform: rotate(-7.3deg);
+    }
+    .photo3 {
+      left: 590px; top: 600.15px; width: 413.73px; height: 563.9px;
+      border-radius: 40.6px; transform: rotate(9.53deg);
+    }
+    .photo4 {
+      left: 580px; top: 1224.81px; width: 414.99px; height: 556.25px;
+      border-radius: 41.6px; transform: rotate(5.9deg);
+    }
+    .photo5 {
+      left: 31.77px; top: 723.21px; width: 206.45px; height: 241.80px;
+      border: 2.5px solid #fe9d9c; border-radius: 12.54px; transform: rotate(3.2deg);
+    }
+    .photo6 {
+      left: 31.77px; top: 1517.34px; width: 233.35px; height: 272.10px;
+      border: 2.8px solid #fe9d9c; border-radius: 13.96px; transform: rotate(-4.01deg);
+    }
+    .photo7 {
+      left: 811.58px; top: 900px; width: 226.98px; height: 240.19px;
+      border: 2.4px solid #fe9d9c; border-radius: 11.93px; transform: rotate(13.66deg);
+    }
+    .photo8 {
+      left: 824.55px; top: 1610.93px; width: 214.01px; height: 228.91px;
+      border: 2.4px solid #fe9d9c; border-radius: 11.93px; transform: rotate(9.07deg);
+    }
+    .vector {
+      position: absolute;
+      left: 510px; top: 415.26px; width: 288.74px; height: 221.09px;
+      transform: rotate(1deg);
+      z-index: 4;
+    }
+    /* Responsive image inside frame */
+    .photo-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  </style>
+</head>
+<body>
+  <div class="figma-bg">
+    <div class="main-img-frame" style="z-index:1;"></div>
+    <!-- Photo frames, bottom to top order as in Figma export -->
+    <div class="photo-frame photo2" style="z-index:2;"><img src="{{image_2}}" alt="Photo 2" /></div>
+    <div class="photo-frame photo6" style="z-index:3;"><img src="{{image_6}}" alt="Photo 6" /></div>
+    <div class="photo-frame photo1" style="z-index:4;"><img src="{{image_1}}" alt="Photo 1" /></div>
+    <div class="photo-frame photo5" style="z-index:5;"><img src="{{image_5}}" alt="Photo 5" /></div>
+    <div class="photo-frame photo3" style="z-index:6;"><img src="{{image_3}}" alt="Photo 3" /></div>
+    <div class="photo-frame photo4" style="z-index:7;"><img src="{{image_4}}" alt="Photo 4" /></div>
+    <div class="photo-frame photo7" style="z-index:8;"><img src="{{image_7}}" alt="Photo 7" /></div>
+    <div class="photo-frame photo8" style="z-index:9;"><img src="{{image_8}}" alt="Photo 8" /></div>
+    <!-- Decorative elements on top -->
+    <div class="vector" style="z-index:10;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="285" height="100" viewBox="0 0 285 100" fill="none">
+        <path d="M3.2161 34.9363C51.691 0.710758 175.184 -34.8951 281.358 96.4859" stroke="white" stroke-width="6.43302" stroke-linecap="round" stroke-dasharray="28.95 28.95"/>
+      </svg>
+    </div>
+    <div class="star" style="z-index:11;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50" fill="none">
+        <g clip-path="url(#clip0_1041_1058)">
+          <path d="M49.1434 25.0035C35.7284 25.0035 24.8308 35.9772 24.8308 49.4861C24.8308 49.5902 24.7619 49.6597 24.6584 49.6597C24.5549 49.6597 24.486 49.5902 24.486 49.4861C24.486 35.9772 13.5884 25.0035 0.173406 25.0035C0.0699484 25.0035 0.000976562 24.934 0.000976562 24.8298C0.000976562 24.7257 0.0699484 24.6562 0.173406 24.6562C13.5884 24.6562 24.486 13.6825 24.486 0.173635C24.486 0.0694541 24.5549 0 24.6584 0C24.7619 0 24.8308 0.0694541 24.8308 0.173635C24.8308 13.6825 35.7284 24.6562 49.1434 24.6562C49.2468 24.6562 49.3158 24.7257 49.3158 24.8298C49.3158 24.934 49.2468 25.0035 49.1434 25.0035Z" fill="white"/>
+        </g>
+        <defs>
+          <clipPath id="clip0_1041_1058">
+            <rect width="49.6597" height="49.6597" fill="white"/>
+          </clipPath>
+        </defs>
+      </svg>
+    </div>
+    <div class="star1" style="z-index:12;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="78" height="78" viewBox="0 0 78 78" fill="none">
+        <g clip-path="url(#clip0_1041_1060)">
+          <path d="M76.3076 38.8241C55.4775 38.8241 38.5564 55.8635 38.5564 76.8393C38.5564 77.001 38.4493 77.1089 38.2887 77.1089C38.128 77.1089 38.0209 77.001 38.0209 76.8393C38.0209 55.8635 21.0998 38.8241 0.269692 38.8241C0.109049 38.8241 0.00195312 38.7162 0.00195312 38.5544C0.00195312 38.3927 0.109049 38.2848 0.269692 38.2848C21.0998 38.2848 38.0209 21.2454 38.0209 0.269611C38.0209 0.107845 38.128 0 38.2887 0C38.4493 0 38.5564 0.107845 38.5564 0.269611C38.5564 21.2454 55.4775 38.2848 76.3076 38.2848C76.4683 38.2848 76.5754 38.3927 76.5754 38.5544C76.5754 38.7162 76.4683 38.8241 76.3076 38.8241Z" fill="white"/>
+        </g>
+        <defs>
+          <clipPath id="clip0_1041_1060">
+            <rect width="77.1089" height="77.1089" fill="white"/>
+          </clipPath>
+        </defs>
+      </svg>
+    </div>
+    <div class="figma-title" style="z-index:20;">
+      <p>{{text_1}}</p>
+    </div>
+  </div>
+</body>
+</html>

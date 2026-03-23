@@ -1,0 +1,176 @@
+/* ═══════════════════════════════════════════════════
+   TEMPLATE 2 — App Store Screenshot
+   Canvas: 1080 × 1920 px
+   Dựa theo Figma export (style.txt / temp1.txt)
+
+   ── Biến chỉnh nhanh ──────────────────────────────
+   --accent-start  : màu gradient bắt đầu (đỏ/coral)
+   --accent-end    : màu gradient kết thúc (hồng nhạt)
+   --title-size    : cỡ chữ tiêu đề (px)
+   ════════════════════════════════════════════════ */
+
+:root {
+  --accent-start: rgba(255, 88, 88, 1);    /* đỏ coral */
+  --accent-end:   rgba(249, 163, 163, 1);  /* hồng nhạt */
+  --title-size:   87.5px;
+}
+
+/* ─── Reset ─── */
+* {
+  -webkit-font-smoothing: antialiased;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+}
+
+/* ─── Canvas ─── */
+.frame {
+  position: relative;
+  width:    1080px;
+  height:   1920px;
+  overflow: hidden;
+
+  /* Background: đen → đỏ → hồng nhạt */
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 1)       0%,
+    var(--accent-start)    44%,
+    var(--accent-end)      99%
+  );
+}
+
+/* ─── Title ─── */
+/* Gradient text ngang: coral → trắng hồng */
+.restyle-photos-with {
+  position: absolute;
+  top:  78px;
+  left: calc(50% - 334px);
+  width: 668px;
+  height: 206px;
+
+  background: linear-gradient(
+    90deg,
+    rgba(243, 120, 120, 1)  0%,
+    rgba(255, 233, 233, 1)  100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+
+  font-family: "Poppins", "Poppins-ExtraBold", "Helvetica Neue", Helvetica, sans-serif;
+  font-weight: 800;
+  font-size:   var(--title-size);
+  text-align:  center;
+  line-height: 103px;
+  letter-spacing: 0;
+}
+
+/* ─── Main image frame ─── */
+/* Bo góc trên, tràn xuống dưới canvas, viền gradient dùng ::before + mask */
+.div {
+  position:      absolute;
+  top:           356px;
+  left:          75px;
+  width:         930px;
+  height:        1732px;    /* tràn đáy: 356 + 1732 = 2088 > 1920 → clip ~168px */
+  border-radius: 80px 80px 0px 0px;
+  overflow:      hidden;
+  border:        none;
+}
+
+/* Viền gradient ::before + webkit-mask trick */
+.div::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 24px;
+  border-radius: 80px 80px 0px 0px;
+  background: linear-gradient(
+    180deg,
+    rgba(254, 157, 156, 1)  0%,
+    rgba(255, 240, 240, 1)  100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* ─── Main photo (bên trong .div) ─── */
+.image {
+  position:    absolute;
+  top:    0;
+  left:   0;
+  width:  100%;
+  height: 100%;
+  object-fit:      cover;
+  object-position: center top;
+}
+
+/* ─── Circle image (before/after) ─── */
+/* Góc trên-phải, đè lên .div, viền gradient */
+.image-wrapper {
+  position:         absolute;
+  top:              438px;
+  left:             calc(50% + 176px); /* = 540 + 176 = 716px */
+  width:            445px;
+  height:           445px;
+  border-radius:    831.05px;
+  background-color: #bcaf9c;
+  box-shadow:
+    21px 25px 25px rgba(0,0,0,0.10),
+    21px -27px 25px rgba(0,0,0,0.17);
+  overflow:   hidden;
+  border:     none;
+  z-index:    20;
+}
+
+/* Viền gradient trên vòng tròn */
+.image-wrapper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 13px;
+  border-radius: 831.05px;
+  background: linear-gradient(
+    180deg,
+    rgba(254, 157, 156, 1)  0%,
+    rgba(255, 240, 240, 1)  100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.image-2 {
+  height:      445px;
+  width:       100%;
+  object-fit:  cover;
+  object-position: top center;
+}
+
+/* ─── Arrow: xuất phát từ dưới circle, cong xuống-trái ─── */
+/* Circle: top:438, left:716, size:445 → bottom của circle ≈ 438+445=883, center-x≈938 */
+.arrow {
+  position: absolute;
+  /* đặt ngay dưới circle, lệch sang trái một chút */
+  top:   820px;
+  left:  760px;
+  width:  160px;
+  height: 200px;
+  z-index: 25;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+}

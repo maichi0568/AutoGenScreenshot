@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScreenshotAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#09090b;color:#f1f5f9;font-family:'Inter',system-ui,sans-serif;min-height:100vh}
+
+/* ===== HEADER ===== */
+.header{padding:32px 40px 0;max-width:960px;margin:0 auto}
+.logo{font-size:22px;font-weight:800;background:linear-gradient(135deg,#F06060,#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-sub{font-size:13px;color:#52525b;margin-top:2px}
+
+/* ===== SEARCH ===== */
+.search-wrap{max-width:960px;margin:28px auto 0;padding:0 40px}
+.search-box{position:relative}
+.search-box svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:#52525b;pointer-events:none}
+.search-input{width:100%;padding:14px 16px 14px 46px;background:#111113;border:1px solid #27272a;border-radius:12px;color:#f1f5f9;font-size:15px;font-family:inherit;outline:none;transition:border-color .2s}
+.search-input:focus{border-color:rgba(240,96,96,.5);box-shadow:0 0 0 3px rgba(240,96,96,.1)}
+.search-input::placeholder{color:#52525b}
+
+/* ===== CONTENT ===== */
+.content{max-width:960px;margin:0 auto;padding:24px 40px 120px}
+
+/* ===== SECTION LABEL ===== */
+.section-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:#52525b;margin:28px 0 14px;padding-left:4px}
+
+/* ===== GROUP CHIPS ===== */
+.group-chips{display:flex;flex-wrap:wrap;gap:10px}
+.group-chip{display:flex;align-items:center;gap:10px;padding:12px 18px;background:#111113;border:1px solid #27272a;border-radius:12px;cursor:pointer;transition:all .2s;user-select:none}
+.group-chip:hover{border-color:rgba(240,96,96,.35);background:#151518}
+.group-chip.active{border-color:#F06060;background:rgba(240,96,96,.08)}
+.group-chip-icon{font-size:22px;flex-shrink:0}
+.group-chip-text{min-width:0}
+.group-chip-name{font-size:14px;font-weight:600;color:#e4e4e7}
+.group-chip-count{font-size:11px;color:#52525b;margin-top:1px}
+.group-chip.hide{display:none}
+
+/* ===== FEATURE LIST ===== */
+.feature-section{margin-top:20px;animation:fadeUp .25s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.feature-search-wrap{margin-bottom:14px;position:relative}
+.feature-search-wrap svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#52525b;pointer-events:none}
+.feature-search{width:100%;padding:11px 14px 11px 40px;background:#111113;border:1px solid #27272a;border-radius:10px;color:#f1f5f9;font-size:14px;font-family:inherit;outline:none;transition:border-color .2s}
+.feature-search:focus{border-color:rgba(240,96,96,.5)}
+.feature-search::placeholder{color:#3f3f46}
+
+.feature-list{display:flex;flex-direction:column;gap:6px}
+.feature-item{display:flex;align-items:center;gap:14px;padding:14px 16px;background:#111113;border:1px solid #27272a;border-radius:12px;cursor:pointer;transition:all .2s;user-select:none}
+.feature-item:hover{border-color:rgba(240,96,96,.3);background:#151518}
+.feature-item.checked{border-color:#F06060;background:rgba(240,96,96,.06)}
+.feature-item.hide{display:none}
+
+.f-check{width:22px;height:22px;border-radius:6px;border:2px solid #3f3f46;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.feature-item.checked .f-check{border-color:#F06060;background:#F06060}
+.f-check svg{opacity:0;transition:opacity .15s}
+.feature-item.checked .f-check svg{opacity:1}
+
+.f-icon{font-size:20px;flex-shrink:0}
+.f-info{flex:1;min-width:0}
+.f-name{font-size:14px;font-weight:600;color:#e4e4e7}
+.f-desc{font-size:12px;color:#52525b;margin-top:1px}
+.f-badge{padding:3px 10px;background:#18181b;border:1px solid #27272a;border-radius:8px;font-size:11px;font-weight:600;color:#71717a;flex-shrink:0}
+
+/* ===== TEMPLATE PREVIEW (expanded under feature) ===== */
+.tpl-expand{overflow:hidden;max-height:0;transition:max-height .35s ease,opacity .25s ease;opacity:0;margin-top:0}
+.tpl-expand.open{max-height:800px;opacity:1;margin-top:10px}
+.tpl-row{display:flex;gap:12px;padding:8px 0 8px 52px;overflow-x:auto}
+.tpl-card{flex-shrink:0;width:140px;background:#111113;border:2px solid #27272a;border-radius:12px;overflow:hidden;cursor:pointer;transition:all .2s;position:relative}
+.tpl-card:hover{border-color:rgba(240,96,96,.5);transform:translateY(-2px)}
+.tpl-card.selected{border-color:#F06060;background:rgba(240,96,96,.04)}
+.tpl-card-check{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,.25);background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:2;transition:all .2s}
+.tpl-card.selected .tpl-card-check{border-color:#F06060;background:#F06060}
+.tpl-card-check svg{opacity:0;transition:opacity .15s}
+.tpl-card.selected .tpl-card-check svg{opacity:1}
+.tpl-card-preview{width:100%;aspect-ratio:9/16;background:#000;overflow:hidden;position:relative}
+.tpl-card-preview iframe{width:1080px;height:1920px;border:none;transform-origin:top left;pointer-events:none}
+.tpl-card-footer{padding:10px 12px;border-top:1px solid #1e1e2e}
+.tpl-card-name{font-size:12px;font-weight:600;color:#a1a1aa}
+
+/* ===== BOTTOM BAR ===== */
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;padding:16px 40px;background:rgba(9,9,11,.92);backdrop-filter:blur(12px);border-top:1px solid #27272a;display:flex;align-items:center;justify-content:space-between;transform:translateY(100%);transition:transform .3s ease;z-index:100}
+.bottom-bar.visible{transform:translateY(0)}
+.bottom-bar-info{font-size:14px;color:#a1a1aa}
+.bottom-bar-info strong{color:#f1f5f9}
+.bottom-bar-tags{display:flex;gap:6px;flex-wrap:wrap;margin-left:16px;flex:1}
+.bottom-bar-tag{padding:4px 10px;background:rgba(240,96,96,.1);border:1px solid rgba(240,96,96,.2);border-radius:6px;font-size:11px;font-weight:600;color:#F9A3A3}
+.btn-edit-sel{padding:12px 36px;background:linear-gradient(135deg,#F06060,#c44040);border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 6px 24px rgba(240,96,96,.3);flex-shrink:0}
+.btn-edit-sel:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(240,96,96,.4)}
+
+/* ===== EMPTY ===== */
+.empty{text-align:center;padding:48px 20px;color:#3f3f46;font-size:14px}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:640px){
+  .header,.search-wrap,.content{padding-left:20px;padding-right:20px}
+  .group-chips{gap:8px}
+  .tpl-row{padding-left:36px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">ScreenshotAI</div>
+  <div class="logo-sub">App Store Screenshot Generator</div>
+</div>
+
+<div class="search-wrap">
+  <div class="search-box">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" class="search-input" id="global-search" placeholder="Search groups or features..." oninput="onGlobalSearch(this.value)">
+  </div>
+</div>
+
+<div class="content">
+  <!-- Groups -->
+  <div class="section-label">Categories</div>
+  <div class="group-chips" id="group-chips"></div>
+
+  <!-- Features (shown when group selected) -->
+  <div id="feature-area"></div>
+</div>
+
+<!-- ===== BOTTOM BAR ===== -->
+<div class="bottom-bar" id="bottom-bar">
+  <div style="display:flex;align-items:center;flex:1;min-width:0">
+    <div class="bottom-bar-info"><strong id="sel-count">0</strong> template(s)</div>
+    <div class="bottom-bar-tags" id="sel-tags"></div>
+  </div>
+  <button class="btn-edit-sel" onclick="goEdit()">Edit Selected</button>
+</div>
+
+<script>
+// ===== DATA (loaded from API) =====
+let DATA = [
+  {
+    id: 'ai_photo_video',
+    name: 'AI Photo & Video',
+    icon: '📸',
+    features: [
+      { id: 'hair_style', name: 'Hair Style', desc: 'AI hairstyle transformation', icon: '💇',
+        templates: [
+          { code: 't1', name: 'Template 1', size: '1080×1920' },
+          { code: 't2', name: 'Template 2', size: '1080×1920' },
+          { code: 't3', name: 'Template 3', size: '1080×1920' },
+        ]
+      },
+      { id: 'make_up', name: 'Make Up', desc: 'AI makeup & beauty filters', icon: '💄',
+        templates: [
+          { code: 'tmpl1', name: 'Template 1 (New)', size: '1080×1920' },
+          { code: 'tmpl4', name: 'Template 4', size: '1080×1920' },
+        ]
+      },
+      { id: 'photo_enhance', name: 'Photo Enhance', desc: 'AI photo enhancement & HDR', icon: '✨',
+        templates: [
+          { code: 'restyle', name: 'Restyle', size: '1242×2688' },
+        ]
+      },
+      { id: 'ai_avatar', name: 'AI Avatar', desc: 'Generate AI-powered avatars', icon: '🤖',
+        templates: [
+          { code: 'tmpl1', name: 'Template 1 (New)', size: '1080×1920' },
+        ]
+      },
+      { id: 'bg_remove', name: 'Background Remove', desc: 'AI background removal', icon: '🖼',
+        templates: [
+          { code: 'restyle', name: 'Restyle', size: '1242×2688' },
+          { code: 'minimal', name: 'Minimal', size: '1242×2688' },
+        ]
+      },
+    ]
+  },
+  {
+    id: 'caller_id',
+    name: 'Caller ID',
+    icon: '📞',
+    features: [
+      { id: 'caller_lookup', name: 'Caller Lookup', desc: 'Identify unknown callers', icon: '🔍',
+        templates: [
+          { code: 'bold', name: 'Bold', size: '1242×2688' },
+          { code: 'minimal', name: 'Minimal', size: '1242×2688' },
+        ]
+      },
+      { id: 'spam_block', name: 'Spam Blocker', desc: 'Block spam & robocalls', icon: '🚫',
+        templates: [
+          { code: 'bold', name: 'Bold', size: '1242×2688' },
+        ]
+      },
+      { id: 'call_record', name: 'Call Recording', desc: 'Record & transcribe calls', icon: '🎙',
+        templates: [
+          { code: 'lifestyle', name: 'Lifestyle', size: '1242×2688' },
+          { code: 'minimal', name: 'Minimal', size: '1242×2688' },
+        ]
+      },
+    ]
+  },
+  {
+    id: 'utility',
+    name: 'Utility & Tools',
+    icon: '🛠',
+    features: [
+      { id: 'vpn', name: 'VPN', desc: 'Secure & private browsing', icon: '🔒',
+        templates: [
+          { code: 'bold', name: 'Bold', size: '1242×2688' },
+          { code: 'lifestyle', name: 'Lifestyle', size: '1242×2688' },
+        ]
+      },
+      { id: 'cleaner', name: 'Phone Cleaner', desc: 'Storage & memory optimization', icon: '🧹',
+        templates: [
+          { code: 'minimal', name: 'Minimal', size: '1242×2688' },
+        ]
+      },
+    ]
+  },
+  {
+    id: 'social',
+    name: 'Social & Entertainment',
+    icon: '🎭',
+    features: [
+      { id: 'face_swap', name: 'Face Swap', desc: 'AI face swapping for fun', icon: '🎭',
+        templates: [
+          { code: 'tmpl4', name: 'Template 4', size: '1080×1920' },
+          { code: 't3', name: 'Template 3', size: '1080×1920' },
+        ]
+      },
+      { id: 'age_transform', name: 'Age Transform', desc: 'AI age progression/regression', icon: '⏳',
+        templates: [
+          { code: 'tmpl1', name: 'Template 1 (New)', size: '1080×1920' },
+          { code: 't1', name: 'Template 1', size: '1080×1920' },
+        ]
+      },
+    ]
+  },
+];
+
+const SAMPLE_IMGS = {
+  main: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=900&q=80',
+  circle: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=450&q=80',
+};
+
+let activeGroupId = null;
+let checkedFeatures = new Set();
+// selectedTpls: Map<string, {code, name, featureName}> — key = "featureId::code"
+const selectedTpls = new Map();
+
+// ===== RENDER GROUPS =====
+function renderGroups() {
+  const container = document.getElementById('group-chips');
+  container.innerHTML = DATA.map(g => `
+    <div class="group-chip" id="gchip-${g.id}" onclick="selectGroup('${g.id}')">
+      <span class="group-chip-icon">${g.icon}</span>
+      <div class="group-chip-text">
+        <div class="group-chip-name">${g.name}</div>
+        <div class="group-chip-count">${g.features.length} features</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function selectGroup(id) {
+  if (activeGroupId === id) {
+    activeGroupId = null;
+    document.getElementById('gchip-' + id).classList.remove('active');
+    document.getElementById('feature-area').innerHTML = '';
+    return;
+  }
+  if (activeGroupId) {
+    const prev = document.getElementById('gchip-' + activeGroupId);
+    if (prev) prev.classList.remove('active');
+  }
+  activeGroupId = id;
+  document.getElementById('gchip-' + id).classList.add('active');
+  checkedFeatures.clear();
+  renderFeatures();
+}
+
+// ===== RENDER FEATURES =====
+function renderFeatures() {
+  const group = DATA.find(g => g.id === activeGroupId);
+  if (!group) return;
+
+  const area = document.getElementById('feature-area');
+  area.innerHTML = `
+    <div class="feature-section">
+      <div class="section-label">${esc(group.name)} — Features</div>
+      <div class="feature-search-wrap">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" class="feature-search" id="feature-search" placeholder="Search features..." oninput="onFeatureSearch(this.value)">
+      </div>
+      <div class="feature-list" id="feature-list">
+        ${group.features.map(f => `
+          <div id="fwrap-${f.id}">
+            <div class="feature-item" id="fitem-${f.id}" onclick="toggleFeature('${f.id}')">
+              <div class="f-check">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <span class="f-icon">${f.icon}</span>
+              <div class="f-info">
+                <div class="f-name">${esc(f.name)}</div>
+                <div class="f-desc">${esc(f.desc)}</div>
+              </div>
+              <span class="f-badge">${f.templates.length} tpl</span>
+            </div>
+            <div class="tpl-expand" id="tpl-expand-${f.id}">
+              <div class="tpl-row" id="tpl-row-${f.id}"></div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  // Restore expanded features & selected templates when switching groups back
+  group.features.forEach(f => {
+    if (checkedFeatures.has(f.id)) {
+      document.getElementById('fitem-' + f.id)?.classList.add('checked');
+      document.getElementById('tpl-expand-' + f.id)?.classList.add('open');
+      renderTemplatesForFeature(f.id);
+    }
+  });
+}
+
+function toggleFeature(fid) {
+  const item = document.getElementById('fitem-' + fid);
+  const expand = document.getElementById('tpl-expand-' + fid);
+  if (!item || !expand) return;
+
+  if (checkedFeatures.has(fid)) {
+    checkedFeatures.delete(fid);
+    item.classList.remove('checked');
+    expand.classList.remove('open');
+  } else {
+    checkedFeatures.add(fid);
+    item.classList.add('checked');
+    expand.classList.add('open');
+    renderTemplatesForFeature(fid);
+  }
+}
+
+function renderTemplatesForFeature(fid) {
+  // Find feature across ALL groups
+  let feature = null;
+  for (const g of DATA) {
+    feature = g.features.find(f => f.id === fid);
+    if (feature) break;
+  }
+  if (!feature) return;
+
+  const row = document.getElementById('tpl-row-' + fid);
+  if (!row || row.children.length > 0) return;
+
+  feature.templates.forEach(tpl => {
+    const key = fid + '::' + tpl.code;
+    const card = document.createElement('div');
+    card.className = 'tpl-card' + (selectedTpls.has(key) ? ' selected' : '');
+    card.id = 'tcard-' + key.replace('::', '-');
+    const previewId = 'prev-' + fid + '-' + tpl.code;
+    card.onclick = () => toggleTpl(fid, tpl.code, feature.name, tpl.name);
+    card.innerHTML = `
+      <div class="tpl-card-check">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="tpl-card-preview" id="${previewId}"></div>
+      <div class="tpl-card-footer">
+        <div class="tpl-card-name">${esc(tpl.name)}</div>
+      </div>
+    `;
+    row.appendChild(card);
+
+    requestAnimationFrame(() => {
+      const box = document.getElementById(previewId);
+      if (!box) return;
+      const boxW = box.clientWidth || 140;
+      const scale = boxW / 1080;
+      const iframe = document.createElement('iframe');
+      iframe.style.width = '1080px';
+      iframe.style.height = '1920px';
+      iframe.style.transform = `scale(${scale})`;
+      iframe.sandbox = 'allow-same-origin allow-scripts';
+      iframe.src = `/preview/${tpl.code}`;
+      box.appendChild(iframe);
+    });
+  });
+}
+
+// ===== TEMPLATE SELECTION =====
+function toggleTpl(fid, code, featureName, tplName) {
+  const key = fid + '::' + code;
+  const cardId = 'tcard-' + key.replace('::', '-');
+  const card = document.getElementById(cardId);
+
+  if (selectedTpls.has(key)) {
+    selectedTpls.delete(key);
+    if (card) card.classList.remove('selected');
+  } else {
+    selectedTpls.set(key, { code, name: tplName, featureName });
+    if (card) card.classList.add('selected');
+  }
+  updateBottomBar();
+}
+
+function updateBottomBar() {
+  const bar = document.getElementById('bottom-bar');
+  const count = selectedTpls.size;
+  document.getElementById('sel-count').textContent = count;
+
+  // Build tags
+  const tags = document.getElementById('sel-tags');
+  tags.innerHTML = [...selectedTpls.values()].map(t =>
+    `<span class="bottom-bar-tag">${esc(t.featureName)} / ${esc(t.name)}</span>`
+  ).join('');
+
+  bar.classList.toggle('visible', count > 0);
+}
+
+function goEdit() {
+  if (selectedTpls.size === 0) return;
+  // Store selection in sessionStorage for multi-editor
+  sessionStorage.setItem('selectedTemplates', JSON.stringify([...selectedTpls.entries()].map(([k, v]) => ({key: k, ...v}))));
+  window.location.href = '/multi-editor.html';
+}
+
+// ===== SEARCH =====
+function onGlobalSearch(query) {
+  const q = query.toLowerCase().trim();
+  const chips = document.querySelectorAll('.group-chip');
+
+  if (!q) {
+    // Show all groups
+    chips.forEach(c => c.classList.remove('hide'));
+    // If a group is active, also reset feature search
+    const fs = document.getElementById('feature-search');
+    if (fs) { fs.value = ''; onFeatureSearch(''); }
+    return;
+  }
+
+  // Filter groups
+  let anyGroupMatch = false;
+  DATA.forEach(g => {
+    const chip = document.getElementById('gchip-' + g.id);
+    const groupMatch = g.name.toLowerCase().includes(q);
+    const featureMatch = g.features.some(f => f.name.toLowerCase().includes(q) || f.desc.toLowerCase().includes(q));
+    const show = groupMatch || featureMatch;
+    chip.classList.toggle('hide', !show);
+    if (show) anyGroupMatch = true;
+  });
+
+  // Also filter features if a group is active
+  if (activeGroupId) {
+    const group = DATA.find(g => g.id === activeGroupId);
+    if (group) {
+      group.features.forEach(f => {
+        const item = document.getElementById('fitem-' + f.id);
+        if (!item) return;
+        const match = f.name.toLowerCase().includes(q) || f.desc.toLowerCase().includes(q);
+        item.parentElement.classList.toggle('hide', !match);
+        item.parentElement.style.display = match ? '' : 'none';
+      });
+    }
+  }
+}
+
+function onFeatureSearch(query) {
+  const q = query.toLowerCase().trim();
+  const group = DATA.find(g => g.id === activeGroupId);
+  if (!group) return;
+
+  group.features.forEach(f => {
+    const el = document.getElementById('fitem-' + f.id);
+    if (!el) return;
+    const match = !q || f.name.toLowerCase().includes(q) || f.desc.toLowerCase().includes(q);
+    el.parentElement.style.display = match ? '' : 'none';
+  });
+}
+
+// ===== UTILS =====
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ===== INIT =====
+async function init() {
+  try {
+    const res = await fetch('/api/data');
+    const data = await res.json();
+    if (data && data.length) DATA = data;
+  } catch {}
+  renderGroups();
+}
+init();
+</script>
+</body>
+</html>

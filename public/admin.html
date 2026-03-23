@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Prompt Config</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#09090b;color:#f1f5f9;font-family:'Inter',system-ui,sans-serif;height:100vh;display:flex;overflow:hidden}
+
+/* ===== LEFT PANEL ===== */
+.left-panel{width:380px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid #1e1e2e;background:#0c0c10;overflow:hidden}
+
+.left-header{padding:24px 24px 0;flex-shrink:0}
+.logo{font-size:20px;font-weight:800;background:linear-gradient(135deg,#F06060,#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-sub{font-size:12px;color:#52525b;margin-top:2px}
+
+.left-search{padding:16px 24px;flex-shrink:0}
+.search-box{position:relative}
+.search-box svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#52525b;pointer-events:none}
+.search-input{width:100%;padding:11px 14px 11px 40px;background:#111113;border:1px solid #27272a;border-radius:10px;color:#f1f5f9;font-size:13px;font-family:inherit;outline:none;transition:border-color .2s}
+.search-input:focus{border-color:rgba(240,96,96,.5)}
+.search-input::placeholder{color:#3f3f46}
+
+.left-scroll{flex:1;overflow-y:auto;padding:0 16px 24px}
+.left-scroll::-webkit-scrollbar{width:4px}
+.left-scroll::-webkit-scrollbar-thumb{background:#27272a;border-radius:2px}
+
+/* ===== GROUPS ===== */
+.section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#3f3f46;margin:16px 8px 10px;padding:0}
+
+.group-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:transparent;border:1px solid transparent;border-radius:10px;cursor:pointer;transition:all .15s;user-select:none;margin-bottom:2px}
+.group-item:hover{background:#111113;border-color:#1e1e2e}
+.group-item.active{background:rgba(240,96,96,.06);border-color:rgba(240,96,96,.25)}
+.group-icon{font-size:18px;flex-shrink:0}
+.group-name{font-size:13px;font-weight:600;color:#a1a1aa;flex:1}
+.group-item.active .group-name{color:#e4e4e7}
+.group-count{font-size:10px;font-weight:600;color:#3f3f46;background:#18181b;padding:2px 7px;border-radius:6px}
+.group-item.active .group-count{background:rgba(240,96,96,.12);color:#F06060}
+.group-arrow{color:#3f3f46;font-size:11px;transition:transform .2s}
+.group-item.active .group-arrow{transform:rotate(90deg);color:#F06060}
+
+/* ===== FEATURES (nested) ===== */
+.feature-wrap{overflow:hidden;max-height:0;transition:max-height .3s ease;margin-left:12px;border-left:1px solid #1e1e2e;padding-left:12px}
+.feature-wrap.open{max-height:2000px}
+
+.feature-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:all .15s;margin-bottom:1px}
+.feature-item:hover{background:#111113}
+.feature-item.active{background:rgba(240,96,96,.06)}
+.f-icon{font-size:16px;flex-shrink:0}
+.f-name{font-size:12.5px;font-weight:500;color:#71717a;flex:1}
+.feature-item.active .f-name{color:#e4e4e7;font-weight:600}
+.f-tpl-count{font-size:10px;color:#3f3f46}
+
+/* ===== TEMPLATES (nested under feature) ===== */
+.tpl-wrap{overflow:hidden;max-height:0;transition:max-height .3s ease;margin-left:12px;border-left:1px solid #1a1a26;padding-left:10px}
+.tpl-wrap.open{max-height:1000px}
+
+.tpl-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;cursor:pointer;transition:all .15s;margin-bottom:1px}
+.tpl-item:hover{background:#111113}
+.tpl-item.active{background:rgba(240,96,96,.1);border-left:2px solid #F06060;margin-left:-2px}
+.tpl-dot{width:6px;height:6px;border-radius:50%;background:#27272a;flex-shrink:0}
+.tpl-item.active .tpl-dot{background:#F06060}
+.tpl-name{font-size:12px;color:#52525b}
+.tpl-item.active .tpl-name{color:#F9A3A3;font-weight:600}
+
+/* ===== RIGHT PANEL ===== */
+.right-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* Topbar */
+.topbar{height:56px;background:#0f0f14;border-bottom:1px solid #1e1e2e;display:flex;align-items:center;padding:0 28px;gap:14px;flex-shrink:0}
+.breadcrumb{font-size:13px;color:#52525b}
+.breadcrumb span{color:#a1a1aa}
+.breadcrumb .hi{color:#F06060;font-weight:600}
+.topbar-spacer{flex:1}
+.save-toast{font-size:12px;font-weight:500;padding:6px 14px;border-radius:6px;opacity:0;transition:opacity .25s;pointer-events:none}
+.save-toast.show{opacity:1}
+.save-toast.ok{background:rgba(74,222,128,.12);color:#4ade80}
+.save-toast.err{background:rgba(248,113,113,.12);color:#f87171}
+.btn-save{padding:8px 22px;background:#F06060;border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+.btn-save:hover{background:#e04848}
+.btn-save:disabled{opacity:.4;cursor:default}
+
+/* Content area */
+.right-content{flex:1;overflow-y:auto;padding:32px;background:#09090b}
+.right-content::-webkit-scrollbar{width:6px}
+.right-content::-webkit-scrollbar-thumb{background:#27272a;border-radius:3px}
+
+/* Empty state */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#27272a;text-align:center}
+.empty-icon{font-size:56px;margin-bottom:16px}
+.empty-title{font-size:18px;font-weight:700;color:#3f3f46;margin-bottom:6px}
+.empty-desc{font-size:13px;color:#27272a}
+
+/* Template header in right panel */
+.tpl-header{margin-bottom:28px}
+.tpl-header-name{font-size:22px;font-weight:800;color:#fff;margin-bottom:4px}
+.tpl-header-path{font-size:12px;color:#52525b;margin-bottom:16px}
+.tpl-preview-bar{display:flex;gap:16px;align-items:flex-end}
+.tpl-preview-box{width:120px;aspect-ratio:9/16;background:#111113;border:2px solid #27272a;border-radius:12px;overflow:hidden;position:relative}
+.tpl-preview-box iframe{width:1080px;height:1920px;border:none;transform-origin:top left;pointer-events:none}
+.tpl-info{flex:1}
+.tpl-info-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.tpl-badge{padding:3px 10px;background:rgba(240,96,96,.1);border:1px solid rgba(240,96,96,.2);border-radius:6px;font-size:11px;font-weight:600;color:#F9A3A3}
+.tpl-size{font-size:11px;color:#3f3f46}
+
+/* Prompt cards */
+.prompt-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#52525b;margin:32px 0 16px}
+
+.prompt-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:1100px){.prompt-grid{grid-template-columns:1fr}}
+
+.prompt-card{background:#111113;border:1px solid #1e1e2e;border-radius:14px;overflow:hidden;transition:border-color .2s}
+.prompt-card:focus-within{border-color:rgba(240,96,96,.4)}
+
+.prompt-card-header{padding:14px 16px 12px;background:#0f0f14;border-bottom:1px solid #1e1e2e;display:flex;align-items:center;gap:10px}
+.prompt-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;background:rgba(240,96,96,.1)}
+.prompt-label{font-size:13px;font-weight:600;color:#e4e4e7;flex:1}
+.ratio-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(240,96,96,.12);color:#F06060;letter-spacing:.3px}
+
+.prompt-card textarea{display:block;width:100%;background:transparent;border:none;color:#d4d4d8;font-size:13px;line-height:1.65;padding:14px 16px;resize:none;min-height:100px;font-family:inherit;outline:none}
+.prompt-card textarea::placeholder{color:#27272a}
+
+.prompt-card-footer{padding:6px 16px 10px;font-size:11px;color:#27272a;display:flex;align-items:center;gap:6px}
+
+/* Ref select */
+.ref-row{padding:0 16px 10px;display:flex;align-items:center;gap:8px;border-top:1px solid #1e1e2e;padding-top:10px}
+.ref-label{font-size:11px;font-weight:600;color:#52525b;flex-shrink:0}
+.ref-select{flex:1;padding:6px 10px;background:#0c0c10;border:1px solid #27272a;border-radius:6px;color:#a1a1aa;font-size:12px;font-family:inherit;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2352525b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+.ref-select:focus{border-color:rgba(240,96,96,.4)}
+.ref-select option{background:#111113;color:#a1a1aa}
+.ref-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(168,85,247,.12);color:#a78bfa;letter-spacing:.3px}
+
+/* Back link */
+.back-link{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#52525b;text-decoration:none;padding:4px 0;transition:color .15s;margin-bottom:4px}
+.back-link:hover{color:#a1a1aa}
+
+/* Add buttons */
+.add-btn{display:flex;align-items:center;gap:6px;padding:8px 12px;background:transparent;border:1px dashed #27272a;border-radius:8px;color:#52525b;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;width:100%;margin-top:6px;font-family:inherit}
+.add-btn:hover{border-color:#F06060;color:#F9A3A3;background:rgba(240,96,96,.04)}
+.add-btn svg{flex-shrink:0}
+
+/* Delete btn */
+.del-btn{width:20px;height:20px;border:none;background:transparent;color:#3f3f46;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:4px;font-size:14px;transition:all .1s;flex-shrink:0;padding:0}
+.del-btn:hover{color:#f87171;background:rgba(248,113,113,.1)}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:center;justify-content:center}
+.modal-overlay.hidden{display:none}
+.modal{background:#111113;border:1px solid #27272a;border-radius:16px;width:420px;max-width:90vw;max-height:80vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.5)}
+.modal-header{padding:18px 20px;border-bottom:1px solid #1e1e2e;font-size:15px;font-weight:700;color:#e4e4e7}
+.modal-body{padding:20px}
+.modal-field{margin-bottom:14px}
+.modal-field label{display:block;font-size:12px;font-weight:500;color:#71717a;margin-bottom:5px}
+.modal-field input,.modal-field select{width:100%;padding:10px 12px;background:#0c0c10;border:1px solid #27272a;border-radius:8px;color:#f1f5f9;font-size:13px;font-family:inherit;outline:none}
+.modal-field input:focus,.modal-field select:focus{border-color:rgba(240,96,96,.5)}
+.modal-field input[type=file]{padding:8px;font-size:12px}
+.modal-field select{appearance:none;-webkit-appearance:none;cursor:pointer}
+.modal-footer{padding:14px 20px;border-top:1px solid #1e1e2e;display:flex;gap:8px;justify-content:flex-end}
+.modal-btn{padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;border:none;transition:all .15s}
+.modal-cancel{background:#1e1e2e;color:#a1a1aa}
+.modal-cancel:hover{background:#27272a}
+.modal-confirm{background:#F06060;color:#fff}
+.modal-confirm:hover{background:#e04848}
+.modal-confirm:disabled{opacity:.4;cursor:not-allowed}
+
+/* Upload area */
+.upload-zone{border:2px dashed #27272a;border-radius:10px;padding:20px;text-align:center;color:#3f3f46;font-size:12px;cursor:pointer;transition:all .15s}
+.upload-zone:hover{border-color:rgba(240,96,96,.3);color:#52525b}
+.upload-zone.has-file{border-color:#F06060;color:#F9A3A3;background:rgba(240,96,96,.04)}
+
+/* Template chips in feature */
+.tpl-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.tpl-chip{font-size:10px;padding:2px 7px;background:#18181b;border:1px solid #27272a;border-radius:4px;color:#52525b}
+
+/* Field config table */
+.field-table{width:100%;border-collapse:collapse;margin-top:16px}
+.field-table th{text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#3f3f46;padding:8px 10px;border-bottom:1px solid #1e1e2e}
+.field-table td{padding:8px 10px;border-bottom:1px solid #1a1a26;vertical-align:middle}
+.field-key{font-size:13px;font-weight:600;color:#e4e4e7;font-family:'SF Mono',monospace}
+.field-type-select{padding:5px 8px;background:#0c0c10;border:1px solid #27272a;border-radius:6px;color:#a1a1aa;font-size:12px;font-family:inherit;outline:none;cursor:pointer}
+.field-type-select:focus{border-color:rgba(240,96,96,.4)}
+.field-ratio-input{padding:5px 8px;background:#0c0c10;border:1px solid #27272a;border-radius:6px;color:#a1a1aa;font-size:12px;width:70px;font-family:inherit;outline:none}
+.field-label-input{padding:5px 8px;background:#0c0c10;border:1px solid #27272a;border-radius:6px;color:#a1a1aa;font-size:12px;width:120px;font-family:inherit;outline:none}
+.btn-save-fields{margin-top:16px;padding:8px 20px;background:#F06060;border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-save-fields:hover{background:#e04848}
+</style>
+</head>
+<body>
+
+<!-- LEFT PANEL -->
+<div class="left-panel">
+  <div class="left-header">
+    <div class="logo">ScreenshotAI</div>
+    <div class="logo-sub">Admin — Prompt Config</div>
+  </div>
+
+  <div class="left-search">
+    <div class="search-box">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" class="search-input" placeholder="Search categories, features..." oninput="onSearch(this.value)">
+    </div>
+  </div>
+
+  <div class="left-scroll" id="left-scroll">
+    <div class="section-label">App Categories</div>
+    <div id="group-list"></div>
+    <button class="add-btn" onclick="showAddCategory()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Category
+    </button>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay hidden" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header" id="modal-title"></div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="modal-btn modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-btn modal-confirm" id="modal-confirm" onclick="confirmModal()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="right-panel">
+  <div class="topbar">
+    <a class="back-link" href="/">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
+      Home
+    </a>
+    <div class="breadcrumb" id="breadcrumb">Admin</div>
+    <div class="topbar-spacer"></div>
+    <span class="save-toast" id="saveToast"></span>
+    <button class="btn-save" id="saveBtn" onclick="saveAll()">Save changes</button>
+  </div>
+
+  <div class="right-content" id="right-content">
+    <div class="empty-state">
+      <div class="empty-icon">🎨</div>
+      <div class="empty-title">Select a template</div>
+      <div class="empty-desc">Choose a category → feature → template from the left to edit its prompts</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== DATA (loaded from API) =====
+let DATA = [];
+
+// Image slot definitions per template code
+const SLOT_DEFS = {};  // loaded from API
+
+let promptData = {};   // loaded from API — { templateCode: { promptKey: value } }
+let activeGroupId = null;
+let activeFeatureId = null;
+let activeTemplateKey = null; // "featureId::code"
+
+let availableTemplates = []; // all template folder codes
+let fieldConfig = {}; // { templateCode: [{key, type, label, ratio}] }
+
+// ===== INIT =====
+async function init() {
+  const [defsRes, promptsRes, dataRes, tplRes, fieldsRes] = await Promise.all([
+    fetch('/api/admin/template-defs'),
+    fetch('/api/admin/prompts'),
+    fetch('/api/data'),
+    fetch('/api/available-templates'),
+    fetch('/api/admin/template-fields'),
+  ]);
+  const defs = await defsRes.json();
+  defs.forEach(d => { SLOT_DEFS[d.code] = d; });
+  promptData = await promptsRes.json();
+  DATA = await dataRes.json();
+  availableTemplates = await tplRes.json();
+  fieldConfig = await fieldsRes.json();
+
+  renderGroups();
+}
+
+// ===== RENDER GROUPS =====
+function renderGroups() {
+  const list = document.getElementById('group-list');
+  list.innerHTML = DATA.map(g => `
+    <div id="gwrap-${g.id}">
+      <div class="group-item" id="gitem-${g.id}" onclick="toggleGroup('${g.id}')">
+        <span class="group-icon">${g.icon}</span>
+        <span class="group-name">${esc(g.name)}</span>
+        <span class="group-count">${g.features.length}</span>
+        <button class="del-btn" onclick="event.stopPropagation();deleteCategory('${g.id}')" title="Delete category">&times;</button>
+        <span class="group-arrow">▶</span>
+      </div>
+      <div class="feature-wrap" id="fwrap-${g.id}">
+        ${g.features.map(f => `
+          <div id="ffull-${f.id}">
+            <div class="feature-item" id="fitem-${f.id}" onclick="toggleFeature('${g.id}','${f.id}')">
+              <span class="f-icon">${f.icon}</span>
+              <span class="f-name">${esc(f.name)}</span>
+              <span class="f-tpl-count">${f.templates.length} tpl</span>
+              <button class="del-btn" onclick="event.stopPropagation();deleteFeature('${g.id}','${f.id}')" title="Delete feature">&times;</button>
+            </div>
+            <div class="tpl-wrap" id="twrap-${f.id}">
+              ${f.templates.map(t => `
+                <div class="tpl-item" id="titem-${f.id}-${t.code}" onclick="selectTemplate('${f.id}','${t.code}')">
+                  <span class="tpl-dot"></span>
+                  <span class="tpl-name">${esc(t.name)}</span>
+                  <button class="del-btn" onclick="event.stopPropagation();deleteTemplate('${g.id}','${f.id}','${t.code}')" title="Remove template">&times;</button>
+                </div>
+              `).join('')}
+              <button class="add-btn" style="margin:4px 0;padding:6px 10px;font-size:11px" onclick="event.stopPropagation();showAddTemplate('${g.id}','${f.id}')">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add Template
+              </button>
+            </div>
+          </div>
+        `).join('')}
+        <button class="add-btn" style="margin:4px 0;padding:6px 10px;font-size:11px" onclick="event.stopPropagation();showAddFeature('${g.id}')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Feature
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ===== TOGGLE GROUP =====
+function toggleGroup(gid) {
+  if (activeGroupId === gid) {
+    // Collapse
+    document.getElementById('gitem-' + gid).classList.remove('active');
+    document.getElementById('fwrap-' + gid).classList.remove('open');
+    activeGroupId = null;
+    return;
+  }
+
+  // Collapse previous
+  if (activeGroupId) {
+    document.getElementById('gitem-' + activeGroupId)?.classList.remove('active');
+    document.getElementById('fwrap-' + activeGroupId)?.classList.remove('open');
+    // Collapse any open feature
+    if (activeFeatureId) {
+      document.getElementById('fitem-' + activeFeatureId)?.classList.remove('active');
+      document.getElementById('twrap-' + activeFeatureId)?.classList.remove('open');
+      activeFeatureId = null;
+    }
+  }
+
+  activeGroupId = gid;
+  document.getElementById('gitem-' + gid).classList.add('active');
+  document.getElementById('fwrap-' + gid).classList.add('open');
+}
+
+// ===== TOGGLE FEATURE =====
+function toggleFeature(gid, fid) {
+  if (activeFeatureId === fid) {
+    document.getElementById('fitem-' + fid).classList.remove('active');
+    document.getElementById('twrap-' + fid).classList.remove('open');
+    activeFeatureId = null;
+    return;
+  }
+
+  // Collapse previous feature
+  if (activeFeatureId) {
+    document.getElementById('fitem-' + activeFeatureId)?.classList.remove('active');
+    document.getElementById('twrap-' + activeFeatureId)?.classList.remove('open');
+  }
+
+  activeFeatureId = fid;
+  document.getElementById('fitem-' + fid).classList.add('active');
+  document.getElementById('twrap-' + fid).classList.add('open');
+}
+
+// ===== SELECT TEMPLATE =====
+function selectTemplate(fid, code) {
+  const key = fid + '::' + code;
+
+  // Deselect previous
+  if (activeTemplateKey) {
+    const [pf, pc] = activeTemplateKey.split('::');
+    document.getElementById('titem-' + pf + '-' + pc)?.classList.remove('active');
+  }
+
+  activeTemplateKey = key;
+  document.getElementById('titem-' + fid + '-' + code)?.classList.add('active');
+
+  // Find feature & template info
+  let feature = null, tplInfo = null, groupName = '';
+  for (const g of DATA) {
+    for (const f of g.features) {
+      if (f.id === fid) {
+        feature = f;
+        groupName = g.name;
+        tplInfo = f.templates.find(t => t.code === code);
+        break;
+      }
+    }
+    if (feature) break;
+  }
+
+  // Update breadcrumb
+  document.getElementById('breadcrumb').innerHTML =
+    `Admin / <span>${esc(groupName)}</span> / <span>${esc(feature?.name||'')}</span> / <span class="hi">${esc(tplInfo?.name||code)}</span>`;
+
+  renderPromptEditor(code, feature, tplInfo);
+}
+
+// ===== RENDER PROMPT EDITOR =====
+function renderPromptEditor(code, feature, tplInfo) {
+  const content = document.getElementById('right-content');
+  const slotDef = SLOT_DEFS[code];
+  const slots = slotDef?.slots || [];
+
+  let html = `
+    <div class="tpl-header">
+      <div class="tpl-header-name">${esc(tplInfo?.name || code)}</div>
+      <div class="tpl-header-path">${esc(feature?.name || '')} — ${esc(feature?.desc || '')}</div>
+      <div class="tpl-preview-bar">
+        <div class="tpl-preview-box" id="tpl-preview-box"></div>
+        <div class="tpl-info">
+          <div class="tpl-info-row">
+            <span class="tpl-badge">${esc(code)}</span>
+            <span class="tpl-size">${esc(tplInfo?.size || '')}</span>
+          </div>
+          <div class="tpl-info-row">
+            <span class="tpl-badge">${slots.length} image slot${slots.length !== 1 ? 's' : ''}</span>
+          </div>
+          <div style="font-size:12px;color:#3f3f46;margin-top:4px;line-height:1.5">
+            ${esc(slotDef?.description || '')}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Tagline prompt section (always shown)
+  const taglineVal = (promptData[code] || {}).tagline_prompt || '';
+  html += `<div class="prompt-section-title">Tagline Prompt</div>`;
+  html += `
+    <div class="prompt-card" style="margin-bottom:24px">
+      <div class="prompt-card-header">
+        <div class="prompt-icon" style="background:rgba(99,102,241,.15)">✍️</div>
+        <span class="prompt-label">Auto-generate Tagline</span>
+        <span class="ratio-badge" style="background:rgba(99,102,241,.15);color:#818cf8">AI</span>
+      </div>
+      <textarea rows="4"
+        placeholder="e.g. Generate a catchy tagline for {feature} in {lang}. Max 6 words, 2 lines..."
+        data-code="${code}"
+        data-key="tagline_prompt"
+        oninput="onPromptInput(this)"
+      >${escAttr(taglineVal)}</textarea>
+      <div class="prompt-card-footer">tagline_prompt — Use {lang}, {feature}, {template} as placeholders</div>
+    </div>
+  `;
+
+  // Description prompt (shown if template has a description field)
+  const hasDesc = fieldConfig[code]?.some(f => f.key === 'description');
+  if (hasDesc) {
+    const descVal = (promptData[code] || {}).description_prompt || '';
+    html += `
+      <div class="prompt-card" style="margin-bottom:24px">
+        <div class="prompt-card-header">
+          <div class="prompt-icon" style="background:rgba(34,197,94,.15)">📝</div>
+          <span class="prompt-label">Auto-generate Description</span>
+          <span class="ratio-badge" style="background:rgba(34,197,94,.15);color:#4ade80">AI</span>
+        </div>
+        <textarea rows="4"
+          placeholder="e.g. Write a short app description for {feature} in {lang}. Max 2 sentences..."
+          data-code="${code}"
+          data-key="description_prompt"
+          oninput="onPromptInput(this)"
+        >${escAttr(descVal)}</textarea>
+        <div class="prompt-card-footer">description_prompt — Use {lang}, {feature}, {template} as placeholders</div>
+      </div>
+    `;
+  }
+
+  if (slots.length === 0) {
+    html += `
+      <div style="text-align:center;padding:40px;color:#27272a">
+        <div style="font-size:32px;margin-bottom:12px">📭</div>
+        <div style="font-size:14px;color:#3f3f46">No image slots configured for this template.</div>
+      </div>
+    `;
+  } else {
+    html += `<div class="prompt-section-title">Image Prompts (${slots.length})</div>`;
+    html += `<div class="prompt-grid">`;
+
+    slots.forEach(slot => {
+      const val = (promptData[code] || {})[slot.promptKey] || '';
+      const refKey = slot.promptKey.replace('_prompt', '_ref');
+      const refVal = (promptData[code] || {})[refKey] || 'none';
+      // Other slots as ref options (exclude self)
+      const otherSlots = slots.filter(s => s.promptKey !== slot.promptKey);
+      const refOptions = otherSlots.map(s => {
+        const sRefKey = s.promptKey.replace('_prompt', '');
+        return `<option value="${sRefKey}" ${refVal === sRefKey ? 'selected' : ''}>${esc(s.label)}</option>`;
+      }).join('');
+
+      html += `
+        <div class="prompt-card">
+          <div class="prompt-card-header">
+            <div class="prompt-icon">📸</div>
+            <span class="prompt-label">${esc(slot.label)}</span>
+            ${refVal !== 'none' ? '<span class="ref-badge">REF</span>' : ''}
+            <span class="ratio-badge">${esc(slot.ratio)}</span>
+          </div>
+          <textarea rows="4"
+            placeholder="e.g. Beautiful portrait, professional photography, soft lighting..."
+            data-code="${code}"
+            data-key="${slot.promptKey}"
+            oninput="onPromptInput(this)"
+          >${escAttr(val)}</textarea>
+          <div class="ref-row">
+            <span class="ref-label">Face ref:</span>
+            <select class="ref-select"
+              data-code="${code}"
+              data-key="${refKey}"
+              onchange="onRefChange(this)">
+              <option value="none" ${refVal === 'none' ? 'selected' : ''}>None</option>
+              ${refOptions}
+            </select>
+          </div>
+          <div class="gen-row" style="padding:8px 16px 10px;border-top:1px solid #1e1e2e;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <button class="btn-gen-test" onclick="testGenImage('${code}','${slot.promptKey}','${slot.ratio}')" style="padding:5px 12px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);border-radius:6px;color:#818cf8;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">⚡ Test Gen</button>
+            ${refVal !== 'none' ? `
+              <input type="text" id="mod-${slot.promptKey}" placeholder="Thay đổi: vd. thêm makeup, đổi tóc ngắn..." style="flex:1;padding:5px 10px;background:#0c0c10;border:1px solid #27272a;border-radius:6px;color:#a1a1aa;font-size:11px;font-family:inherit;outline:none;min-width:150px">
+              <button class="btn-gen-var" onclick="genVariation('${code}','${slot.promptKey}','${refKey}','${slot.ratio}')" style="padding:5px 12px;background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.3);border-radius:6px;color:#a78bfa;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">🔄 Gen Variation</button>
+            ` : ''}
+            <div id="gen-preview-${slot.promptKey}" style="margin-top:8px;width:100%"></div>
+          </div>
+          <div class="prompt-card-footer">${esc(slot.promptKey)}</div>
+        </div>
+      `;
+    });
+
+    html += `</div>`;
+  }
+
+  // Field config section
+  html += `<div class="prompt-section-title">Field Configuration</div>`;
+  if (fieldConfig[code]) {
+    html += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <span style="font-size:12px;color:#4ade80;font-weight:600">${fieldConfig[code].length} fields configured</span>
+      <button class="btn-save-fields" style="margin:0;padding:5px 14px;font-size:11px" onclick="rescanTemplate('${code}')">Re-scan &amp; Reset</button>
+    </div>`;
+  } else {
+    html += `<div style="font-size:12px;color:#3f3f46;margin-bottom:12px">No fields configured yet.</div>`;
+  }
+  html += `<div id="field-config-area" data-code="${code}"></div>`;
+
+  content.innerHTML = html;
+
+  // If config exists, render table
+  if (fieldConfig[code]) {
+    renderFieldConfigTable(code, fieldConfig[code]);
+  } else {
+    // Auto-scan on first view
+    loadFieldConfig(code);
+  }
+
+  // Load preview iframe
+  requestAnimationFrame(() => {
+    const box = document.getElementById('tpl-preview-box');
+    if (!box) return;
+    const boxW = box.clientWidth || 120;
+    const scale = boxW / 1080;
+    const iframe = document.createElement('iframe');
+    iframe.style.width = '1080px';
+    iframe.style.height = '1920px';
+    iframe.style.transform = `scale(${scale})`;
+    iframe.style.transformOrigin = 'top left';
+    iframe.style.border = 'none';
+    iframe.style.pointerEvents = 'none';
+    iframe.sandbox = 'allow-same-origin allow-scripts';
+    iframe.src = `/preview/${code}`;
+    box.appendChild(iframe);
+  });
+}
+
+// ===== PROMPT INPUT =====
+function onPromptInput(el) {
+  const code = el.dataset.code;
+  const key = el.dataset.key;
+  if (!promptData[code]) promptData[code] = {};
+  promptData[code][key] = el.value;
+}
+
+function onRefChange(el) {
+  const code = el.dataset.code;
+  const key = el.dataset.key;
+  if (!promptData[code]) promptData[code] = {};
+  promptData[code][key] = el.value;
+  // Re-render to update REF badge
+  if (activeTemplateKey) {
+    const [fid, tcode] = activeTemplateKey.split('::');
+    selectTemplate(fid, tcode);
+  }
+}
+
+// ===== FIELD CONFIG =====
+async function rescanTemplate(code) {
+  if (!confirm('This will reset field config and re-scan the template HTML. Continue?')) return;
+  // Delete field config for this code
+  delete fieldConfig[code];
+  await fetch('/api/admin/template-fields', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(fieldConfig),
+  });
+  // Re-render the prompt editor to trigger auto-scan
+  if (activeTemplateKey) {
+    const [fid, tcode] = activeTemplateKey.split('::');
+    selectTemplate(fid, tcode);
+  }
+}
+
+async function loadFieldConfig(code) {
+  try {
+    const res = await fetch('/api/scan-template/' + code);
+    const data = await res.json();
+
+    if (data.placeholders && data.placeholders.length > 0) {
+      // Template already has {{...}} placeholders
+      const existing = fieldConfig[code] || [];
+      const config = data.placeholders.map(key => {
+        const prev = existing.find(f => f.key === key);
+        return prev || { key, type: guessFieldType(key), label: key.replace(/_/g, ' '), ratio: '9:16' };
+      });
+      fieldConfig[code] = config;
+      renderFieldConfigTable(code, config);
+    } else if (data.detected && data.detected.length > 0) {
+      // No placeholders — show detected elements for user to convert
+      renderDetectedElements(code, data.detected);
+    } else {
+      showToast('No customizable elements found in template', 'err');
+    }
+  } catch (err) {
+    showToast('Scan failed: ' + err.message, 'err');
+  }
+}
+
+function renderDetectedElements(code, detected) {
+  const area = document.getElementById('field-config-area');
+  if (!area) return;
+  let html = `
+    <div style="font-size:13px;color:#F9A3A3;margin-bottom:12px;font-weight:600">Found ${detected.length} customizable elements. Select which to make dynamic:</div>
+    <table class="field-table">
+      <thead><tr><th style="width:30px"></th><th>Type</th><th>Current Content</th><th>Placeholder Key</th><th>Ratio</th></tr></thead>
+      <tbody>
+  `;
+  detected.forEach((d, i) => {
+    let preview = d.original || '';
+    if (d.type === 'image') {
+      preview = preview.length > 30 ? '...' + preview.slice(-30) : preview;
+    } else {
+      // Show text with \n as visual line breaks
+      preview = preview.replace(/\n/g, ' / ');
+      if (preview.length > 50) preview = preview.substring(0, 50) + '...';
+    }
+    html += `
+      <tr>
+        <td><input type="checkbox" id="det-chk-${i}" checked></td>
+        <td><span style="font-size:11px;padding:2px 8px;border-radius:4px;font-weight:600;${
+          d.type === 'image' ? 'background:rgba(240,96,96,.12);color:#F06060' : 'background:rgba(99,102,241,.12);color:#818cf8'
+        }">${d.type === 'image' ? 'IMG' : 'TXT'}</span></td>
+        <td><span style="font-size:11px;color:#71717a;word-break:break-all">${esc(preview)}</span></td>
+        <td><input class="field-label-input" id="det-key-${i}" value="${escAttr(d.key)}" style="width:110px"></td>
+        <td>${d.type === 'image' ? `<input class="field-ratio-input" id="det-ratio-${i}" value="9:16" placeholder="9:16">` : '-'}</td>
+      </tr>
+    `;
+  });
+  html += `</tbody></table>`;
+  html += `<button class="btn-save-fields" onclick="applyDetectedPlaceholders('${code}')">Convert to Placeholders</button>`;
+  area.dataset.detected = JSON.stringify(detected);
+  area.innerHTML = html;
+}
+
+async function applyDetectedPlaceholders(code) {
+  const area = document.getElementById('field-config-area');
+  const detected = JSON.parse(area.dataset.detected || '[]');
+  const replacements = [];
+  const configFields = [];
+
+  detected.forEach((d, i) => {
+    const checked = document.getElementById('det-chk-' + i)?.checked;
+    if (!checked) return;
+    const key = document.getElementById('det-key-' + i)?.value?.trim() || d.key;
+    const type = d.type;
+    const ratio = document.getElementById('det-ratio-' + i)?.value || '9:16';
+    replacements.push({ original: d.original, key, type, pTags: d.pTags || null });
+    configFields.push({ key, type, label: key.replace(/_/g, ' '), ratio: type === 'image' ? ratio : '' });
+  });
+
+  if (!replacements.length) { showToast('Select at least one element', 'err'); return; }
+
+  try {
+    // Apply placeholders to HTML file
+    const res = await fetch('/api/apply-placeholders/' + code, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ replacements }),
+    });
+    if (!res.ok) throw new Error('Failed to apply placeholders');
+
+    // Save field config
+    fieldConfig[code] = configFields;
+    await fetch('/api/admin/template-fields', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(fieldConfig),
+    });
+
+    showToast('Placeholders applied and saved!', 'ok');
+
+    // Reload template defs
+    const defsRes = await fetch('/api/admin/template-defs');
+    const defs = await defsRes.json();
+    defs.forEach(d2 => { SLOT_DEFS[d2.code] = d2; });
+
+    // Re-render
+    renderFieldConfigTable(code, configFields);
+  } catch (err) {
+    showToast(err.message, 'err');
+  }
+}
+
+function guessFieldType(key) {
+  const k = key.toLowerCase();
+  if (k.includes('img') || k.includes('image') || k.includes('photo')) return 'image';
+  if (k.includes('color') || k.includes('accent') || k.includes('background')) return 'color';
+  return 'text';
+}
+
+function renderFieldConfigTable(code, fields) {
+  const area = document.getElementById('field-config-area');
+  if (!area) return;
+  let html = `
+    <table class="field-table">
+      <thead><tr><th>Placeholder</th><th>Type</th><th>Label</th><th>Ratio</th></tr></thead>
+      <tbody>
+  `;
+  fields.forEach((f, i) => {
+    html += `
+      <tr>
+        <td><span class="field-key">{{${esc(f.key)}}}</span></td>
+        <td>
+          <select class="field-type-select" onchange="updateFieldConfig('${code}',${i},'type',this.value)">
+            <option value="text" ${f.type==='text'?'selected':''}>Text</option>
+            <option value="image" ${f.type==='image'?'selected':''}>Image</option>
+            <option value="color" ${f.type==='color'?'selected':''}>Color</option>
+            <option value="ignore" ${f.type==='ignore'?'selected':''}>Ignore</option>
+          </select>
+        </td>
+        <td><input class="field-label-input" value="${escAttr(f.label)}" onchange="updateFieldConfig('${code}',${i},'label',this.value)"></td>
+        <td>${f.type==='image'?`<input class="field-ratio-input" value="${escAttr(f.ratio||'9:16')}" placeholder="9:16" onchange="updateFieldConfig('${code}',${i},'ratio',this.value)">`:'-'}</td>
+      </tr>
+    `;
+  });
+  html += `</tbody></table>`;
+  html += `<button class="btn-save-fields" onclick="saveFieldConfig('${code}')">Save Field Config</button>`;
+  area.innerHTML = html;
+}
+
+function updateFieldConfig(code, idx, prop, value) {
+  if (!fieldConfig[code]) return;
+  fieldConfig[code][idx][prop] = value;
+  // Re-render to show/hide ratio column
+  if (prop === 'type') renderFieldConfigTable(code, fieldConfig[code]);
+}
+
+async function saveFieldConfig(code) {
+  try {
+    const res = await fetch('/api/admin/template-fields', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(fieldConfig),
+    });
+    if (!res.ok) throw new Error('Save failed');
+    showToast('Field config saved!', 'ok');
+    // Reload template defs so slots update
+    const defsRes = await fetch('/api/admin/template-defs');
+    const defs = await defsRes.json();
+    defs.forEach(d => { SLOT_DEFS[d.code] = d; });
+    // Re-render current template
+    if (activeTemplateKey) {
+      const [fid, tcode] = activeTemplateKey.split('::');
+      selectTemplate(fid, tcode);
+    }
+  } catch (err) {
+    showToast(err.message, 'err');
+  }
+}
+
+// ===== SAVE =====
+async function saveAll() {
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  try {
+    const [r1, r2] = await Promise.all([
+      fetch('/api/admin/prompts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(promptData) }),
+      fetch('/api/data', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(DATA) }),
+    ]);
+    if (!r1.ok || !r2.ok) throw new Error('Save failed');
+    showToast('Saved!', 'ok');
+  } catch (err) {
+    showToast(err.message, 'err');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ===== MODAL =====
+let modalAction = null;
+function openModal(title, bodyHtml, confirmLabel, action) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = bodyHtml;
+  document.getElementById('modal-confirm').textContent = confirmLabel || 'Add';
+  document.getElementById('modal-overlay').classList.remove('hidden');
+  modalAction = action;
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.add('hidden');
+  modalAction = null;
+}
+function confirmModal() {
+  if (modalAction) modalAction();
+}
+
+// ===== ADD CATEGORY =====
+function showAddCategory() {
+  openModal('Add Category', `
+    <div class="modal-field"><label>Name</label><input id="m-cat-name" placeholder="e.g. AI Photo & Video"></div>
+    <div class="modal-field"><label>Icon (emoji)</label><input id="m-cat-icon" placeholder="e.g. 📸" maxlength="4"></div>
+  `, 'Add', () => {
+    const name = document.getElementById('m-cat-name').value.trim();
+    const icon = document.getElementById('m-cat-icon').value.trim() || '📁';
+    if (!name) return;
+    const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+    DATA.push({ id, name, icon, features: [] });
+    renderGroups();
+    closeModal();
+    showToast('Category added (save to keep)', 'ok');
+  });
+}
+
+// ===== ADD FEATURE =====
+function showAddFeature(gid) {
+  openModal('Add Feature', `
+    <div class="modal-field"><label>Name</label><input id="m-feat-name" placeholder="e.g. Hair Style"></div>
+    <div class="modal-field"><label>Description</label><input id="m-feat-desc" placeholder="e.g. AI hairstyle transformation"></div>
+    <div class="modal-field"><label>Icon (emoji)</label><input id="m-feat-icon" placeholder="e.g. 💇" maxlength="4"></div>
+  `, 'Add', () => {
+    const name = document.getElementById('m-feat-name').value.trim();
+    const desc = document.getElementById('m-feat-desc').value.trim();
+    const icon = document.getElementById('m-feat-icon').value.trim() || '✨';
+    if (!name) return;
+    const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+    const group = DATA.find(g => g.id === gid);
+    if (group) {
+      group.features.push({ id, name, desc, icon, templates: [] });
+      renderGroups();
+      // Re-open group
+      document.getElementById('gitem-' + gid)?.classList.add('active');
+      document.getElementById('fwrap-' + gid)?.classList.add('open');
+    }
+    closeModal();
+    showToast('Feature added (save to keep)', 'ok');
+  });
+}
+
+// ===== ADD TEMPLATE =====
+function showAddTemplate(gid, fid) {
+  const existingOpts = availableTemplates.map(c => `<option value="${c}">${c}</option>`).join('');
+  openModal('Add Template', `
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="modal-btn modal-cancel" id="m-tab-existing" onclick="switchTplTab('existing')" style="flex:1;font-weight:700;background:rgba(240,96,96,.15);color:#F9A3A3">Existing</button>
+      <button class="modal-btn modal-cancel" id="m-tab-upload" onclick="switchTplTab('upload')" style="flex:1">Upload New</button>
+    </div>
+    <div id="m-tpl-existing">
+      <div class="modal-field"><label>Template</label><select id="m-tpl-code">${existingOpts}</select></div>
+      <div class="modal-field"><label>Display Name</label><input id="m-tpl-name" placeholder="e.g. Bold"></div>
+      <div class="modal-field"><label>Size</label><input id="m-tpl-size" value="1080x1920" placeholder="e.g. 1080x1920"></div>
+    </div>
+    <div id="m-tpl-upload" style="display:none">
+      <div class="modal-field"><label>Template Code</label><input id="m-up-code" placeholder="e.g. my_template (a-z, 0-9, _)"></div>
+      <div class="modal-field"><label>Display Name</label><input id="m-up-name" placeholder="e.g. My Template"></div>
+      <div class="modal-field"><label>HTML File</label><input type="file" id="m-up-html" accept=".html"></div>
+      <div class="modal-field"><label>CSS File (optional)</label><input type="file" id="m-up-css" accept=".css"></div>
+      <div class="modal-field"><label>Size</label><input id="m-up-size" value="1080x1920"></div>
+    </div>
+  `, 'Add', async () => {
+    const tab = document.getElementById('m-tpl-upload').style.display === 'none' ? 'existing' : 'upload';
+    const group = DATA.find(g => g.id === gid);
+    const feature = group?.features.find(f => f.id === fid);
+    if (!feature) return;
+
+    if (tab === 'existing') {
+      const code = document.getElementById('m-tpl-code').value;
+      const name = document.getElementById('m-tpl-name').value.trim() || code;
+      const size = document.getElementById('m-tpl-size').value.trim() || '1080x1920';
+      if (!code) return;
+      feature.templates.push({ code, name, size });
+    } else {
+      const code = document.getElementById('m-up-code').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+      const name = document.getElementById('m-up-name').value.trim() || code;
+      const size = document.getElementById('m-up-size').value.trim() || '1080x1920';
+      const htmlFile = document.getElementById('m-up-html').files[0];
+      if (!code || !htmlFile) { showToast('Code and HTML file required', 'err'); return; }
+      const cssFile = document.getElementById('m-up-css').files[0];
+      const fd = new FormData();
+      fd.append('code', code);
+      fd.append('html', htmlFile);
+      if (cssFile) fd.append('css', cssFile);
+      const res = await fetch('/api/upload-template', { method: 'POST', body: fd });
+      const json = await res.json();
+      if (!res.ok) { showToast(json.error || 'Upload failed', 'err'); return; }
+      if (!availableTemplates.includes(code)) availableTemplates.push(code);
+      feature.templates.push({ code, name, size });
+
+      // Reload field config (auto-detected by server)
+      const fcRes = await fetch('/api/admin/template-fields');
+      fieldConfig = await fcRes.json();
+
+      // Reload template defs
+      const defsRes2 = await fetch('/api/admin/template-defs');
+      const defs2 = await defsRes2.json();
+      defs2.forEach(d2 => { SLOT_DEFS[d2.code] = d2; });
+
+      const autoCount = json.autoFields?.length || 0;
+      if (autoCount > 0) {
+        showToast(`Uploaded! Auto-detected ${autoCount} fields. Click template to configure prompts.`, 'ok');
+      }
+    }
+    renderGroups();
+    document.getElementById('gitem-' + gid)?.classList.add('active');
+    document.getElementById('fwrap-' + gid)?.classList.add('open');
+    document.getElementById('fitem-' + fid)?.classList.add('active');
+    document.getElementById('twrap-' + fid)?.classList.add('open');
+    closeModal();
+    if (!arguments[0]?._toasted) showToast('Template added (save to keep)', 'ok');
+  });
+}
+
+function switchTplTab(tab) {
+  document.getElementById('m-tpl-existing').style.display = tab === 'existing' ? '' : 'none';
+  document.getElementById('m-tpl-upload').style.display = tab === 'upload' ? '' : 'none';
+  document.getElementById('m-tab-existing').style.cssText = tab === 'existing' ? 'flex:1;font-weight:700;background:rgba(240,96,96,.15);color:#F9A3A3' : 'flex:1';
+  document.getElementById('m-tab-upload').style.cssText = tab === 'upload' ? 'flex:1;font-weight:700;background:rgba(240,96,96,.15);color:#F9A3A3' : 'flex:1';
+}
+
+// ===== DELETE =====
+function deleteCategory(gid) {
+  if (!confirm('Delete this category and all its features?')) return;
+  DATA = DATA.filter(g => g.id !== gid);
+  renderGroups();
+  showToast('Category deleted (save to keep)', 'ok');
+}
+
+function deleteFeature(gid, fid) {
+  if (!confirm('Delete this feature?')) return;
+  const group = DATA.find(g => g.id === gid);
+  if (group) group.features = group.features.filter(f => f.id !== fid);
+  renderGroups();
+  showToast('Feature deleted (save to keep)', 'ok');
+}
+
+function deleteTemplate(gid, fid, code) {
+  const group = DATA.find(g => g.id === gid);
+  const feature = group?.features.find(f => f.id === fid);
+  if (feature) feature.templates = feature.templates.filter(t => t.code !== code);
+  renderGroups();
+  document.getElementById('gitem-' + gid)?.classList.add('active');
+  document.getElementById('fwrap-' + gid)?.classList.add('open');
+  document.getElementById('fitem-' + fid)?.classList.add('active');
+  document.getElementById('twrap-' + fid)?.classList.add('open');
+  showToast('Template removed (save to keep)', 'ok');
+}
+
+function showToast(msg, type) {
+  const el = document.getElementById('saveToast');
+  el.textContent = msg;
+  el.className = `save-toast show ${type}`;
+  setTimeout(() => { el.className = 'save-toast'; }, 2500);
+}
+
+// ===== SEARCH =====
+function onSearch(query) {
+  const q = query.toLowerCase().trim();
+
+  DATA.forEach(g => {
+    const gWrap = document.getElementById('gwrap-' + g.id);
+    let groupVisible = false;
+
+    g.features.forEach(f => {
+      const fFull = document.getElementById('ffull-' + f.id);
+      const fMatch = !q || f.name.toLowerCase().includes(q) || f.desc.toLowerCase().includes(q);
+
+      // Also check template names
+      const tMatch = f.templates.some(t => t.name.toLowerCase().includes(q) || t.code.toLowerCase().includes(q));
+      const show = fMatch || tMatch;
+
+      if (fFull) fFull.style.display = show ? '' : 'none';
+      if (show) groupVisible = true;
+    });
+
+    const gNameMatch = !q || g.name.toLowerCase().includes(q);
+    if (gNameMatch) groupVisible = true;
+    if (gWrap) gWrap.style.display = groupVisible ? '' : 'none';
+
+    // Auto-expand groups when searching
+    if (q && groupVisible) {
+      document.getElementById('gitem-' + g.id)?.classList.add('active');
+      document.getElementById('fwrap-' + g.id)?.classList.add('open');
+    } else if (!q) {
+      // Only collapse if not the active group
+      if (g.id !== activeGroupId) {
+        document.getElementById('gitem-' + g.id)?.classList.remove('active');
+        document.getElementById('fwrap-' + g.id)?.classList.remove('open');
+      }
+    }
+  });
+}
+
+// ===== UTILS =====
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+function escAttr(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ===== IMAGE GEN & VARIATION =====
+const genResults = {}; // { promptKey: imageUrl }
+
+async function testGenImage(code, promptKey, ratio) {
+  const textarea = document.querySelector(`textarea[data-code="${code}"][data-key="${promptKey}"]`);
+  const prompt = textarea?.value?.trim();
+  if (!prompt) return alert('Prompt is empty');
+
+  const preview = document.getElementById('gen-preview-' + promptKey);
+  preview.innerHTML = '<div style="font-size:12px;color:#818cf8">⏳ Generating...</div>';
+
+  try {
+    const res = await fetch('/api/gen-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, aspectRatio: ratio })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    genResults[promptKey] = data.url;
+    preview.innerHTML = `
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <img src="${data.url}" style="width:80px;border-radius:8px;border:1px solid #27272a">
+        <div style="font-size:11px;color:#4ade80">✅ Generated<br><span style="color:#52525b">${data.url}</span></div>
+      </div>
+    `;
+  } catch (err) {
+    preview.innerHTML = `<div style="font-size:12px;color:#f87171">❌ ${err.message}</div>`;
+  }
+}
+
+async function genVariation(code, promptKey, refKey, ratio) {
+  // Get the ref target key (e.g. "image_1" from "image_2_ref")
+  const refSelect = document.querySelector(`select[data-code="${code}"][data-key="${refKey}"]`);
+  const refTarget = refSelect?.value;
+  if (!refTarget || refTarget === 'none') return alert('No face reference selected');
+
+  // Find the generated image for the ref target
+  const refPromptKey = refTarget + '_prompt';
+  const refImageUrl = genResults[refPromptKey];
+  if (!refImageUrl) return alert('Ref image not generated yet. Click "Test Gen" on ' + refTarget + ' first.');
+
+  const modInput = document.getElementById('mod-' + promptKey);
+  const modification = modInput?.value?.trim() || '';
+  if (!modification) return alert('Please enter a modification (e.g. "add glamorous makeup", "change to short hair")');
+
+  const preview = document.getElementById('gen-preview-' + promptKey);
+  preview.innerHTML = '<div style="font-size:12px;color:#a78bfa">⏳ Đang edit ảnh gốc (giữ nguyên người, chỉ đổi ' + modification + ')...</div>';
+
+  try {
+    const res = await fetch('/api/gen-variation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        refImageUrl: refImageUrl.replace(/^\/api\/cache\//, 'assets/cache/'),
+        aspectRatio: ratio,
+        modification
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    genResults[promptKey] = data.url;
+    preview.innerHTML = `
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <img src="${refImageUrl}" style="width:60px;border-radius:8px;border:1px solid #27272a;opacity:.6" title="Reference">
+        <span style="color:#52525b;font-size:16px;align-self:center">→</span>
+        <img src="${data.url}" style="width:80px;border-radius:8px;border:1px solid #a78bfa">
+        <div style="font-size:11px;color:#a78bfa">✅ Variation generated${modification ? '<br><span style="color:#52525b">Mod: ' + modification + '</span>' : ''}</div>
+      </div>
+    `;
+  } catch (err) {
+    preview.innerHTML = `<div style="font-size:12px;color:#f87171">❌ ${err.message}</div>`;
+  }
+}
+
+// ===== START =====
+init();
+</script>
+</body>
+</html>

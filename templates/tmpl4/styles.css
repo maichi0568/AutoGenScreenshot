@@ -1,0 +1,85 @@
+/* Template tmpl4 — 4-photo collage, Canvas: 1080×1920px */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; -webkit-font-smoothing: antialiased; }
+
+.frame {
+  position: relative;
+  width: 1080px;
+  height: 1920px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #000 20.715%, #ff5858 55.485%, #f9a3a3 99.469%);
+  font-family: 'Poppins', Arial, sans-serif;
+}
+
+.title {
+  position: absolute;
+  left: 50%;
+  top: 78px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  font-family: 'Poppins', Arial, sans-serif;
+  font-weight: 800;
+  font-size: 87.54px;
+  line-height: 103px;
+  text-transform: capitalize;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+
+  max-width: 1000px;
+  background: linear-gradient(90deg, #f37878, #ffe9e9);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  z-index: 2;
+}
+.title p { margin: 0; }
+
+.main-frame {
+  position: absolute;
+  left: 87px;
+  top: 368px;
+  width: 906px;
+  height: 1708px;
+  border: 12px solid #fe9d9c;
+  border-radius: 80px 80px 0 0;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.img-collage img {
+  position: absolute;
+  object-fit: cover;
+  max-width: none;
+  pointer-events: none;
+  border-radius: 40px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+}
+.img1 { left: 46px; top: 445px; width: 504px; height: 635px; transform: rotate(-3.83deg); z-index: 2; }
+.img2 { left: 29px; top: 1120px; width: 480px; height: 679px; transform: rotate(-7.3deg); z-index: 2; }
+.img3 { left: 549px; top: 600px; width: 414px; height: 564px; transform: rotate(9.53deg) scaleY(-1); z-index: 2; }
+.img4 { left: 532px; top: 1225px; width: 415px; height: 556px; transform: rotate(5.9deg); z-index: 2; }
+
+.vector73 {
+  position: absolute;
+  left: 510px; top: 460px;
+  width: 273px; height: 102px;
+  transform: rotate(5deg);
+  z-index: 3;
+}
+.star1 {
+  position: absolute;
+  left: 849px; top: 488px;
+  width: 50px; height: 50px;
+  z-index: 4;
+}
+.star2 {
+  position: absolute;
+  left: 772px; top: 405px;
+  width: 77px; height: 77px;
+  z-index: 4;
+}

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Template 2 Preview — ScreenshotAI</title>
+<style>
+  :root {
+    --bg: #0f0f17; --surface: #1a1a2e; --surface2: #16213e;
+    --accent: #7c3aed; --accent2: #a855f7;
+    --text: #f1f5f9; --muted: #94a3b8; --border: #2d2d4e;
+    --success: #22c55e;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+    height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+  .topbar { height: 56px; background: var(--surface); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 20px; gap: 16px; flex-shrink: 0; }
+  .topbar-logo { font-size: 16px; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .topbar-sep { width: 1px; height: 24px; background: var(--border); }
+  .template-badge { background: var(--accent); color: white; font-size: 12px;
+    font-weight: 600; padding: 4px 12px; border-radius: 20px; }
+  .topbar-right { margin-left: auto; display: flex; gap: 10px; }
+  .btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white; }
+  .btn-primary:hover { opacity: 0.85; }
+
+  .main { flex: 1; display: flex; overflow: hidden; }
+
+  .sidebar { width: 320px; background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .section { padding: 20px; border-bottom: 1px solid var(--border); }
+  .section-title { font-size: 11px; font-weight: 700; color: var(--muted);
+    letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 16px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+  .field input[type="text"], .field input[type="color"], .field textarea {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 13px; padding: 9px 12px; outline: none; }
+  .field input[type="color"] { height: 40px; padding: 4px 8px; cursor: pointer; }
+  .field input:focus, .field textarea:focus { border-color: var(--accent); }
+  .field textarea { resize: vertical; min-height: 200px;
+    font-family: 'SF Mono','Fira Code','Courier New',monospace; font-size: 12px; line-height: 1.6; }
+  .color-row { display: flex; gap: 8px; align-items: center; }
+  .color-row input[type="color"] { width: 56px; flex-shrink: 0; }
+  .color-row input[type="text"] { flex: 1; }
+  .apply-btn { width: 100%; margin-top: 10px; padding: 10px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+    font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .apply-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .canvas-area { flex: 1; display: flex; flex-direction: column; align-items: center;
+    overflow: auto; background: #09090f; padding: 32px; gap: 16px; }
+  .canvas-area::-webkit-scrollbar { width: 6px; height: 6px; }
+  .canvas-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .zoom-bar { display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 10; }
+  .zoom-btn { width: 32px; height: 32px; border-radius: 6px; background: var(--surface);
+    border: 1px solid var(--border); color: var(--text); font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .zoom-btn:hover { border-color: var(--accent); }
+  .zoom-label { font-size: 12px; color: var(--muted); min-width: 40px; text-align: center; }
+  .canvas-size-info { font-size: 11px; color: var(--muted); background: var(--surface);
+    padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border); }
+
+  .preview-wrapper { transform-origin: top center; transition: transform 0.2s; }
+  .preview-shadow { box-shadow: 0 40px 120px rgba(0,0,0,0.7); border-radius: 4px; overflow: hidden; }
+  iframe#preview-frame { display: block; width: 1080px; height: 1920px; border: none; background: #000; }
+
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface);
+    border: 1px solid var(--border); border-left: 3px solid var(--success);
+    padding: 12px 20px; border-radius: 10px; font-size: 13px; color: var(--text);
+    opacity: 0; transform: translateY(10px); transition: all 0.25s; z-index: 100; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-logo">ScreenshotAI</span>
+  <div class="topbar-sep"></div>
+  <span class="template-badge">template2</span>
+  <div class="topbar-right">
+    <button class="btn btn-ghost" onclick="window.location='/'">← Back</button>
+    <button class="btn btn-primary" onclick="liveUpdate(); showToast('✓ Applied')">▶ Apply</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="sidebar">
+
+    <!-- Content -->
+    <div class="section">
+      <div class="section-title">Content</div>
+      <div class="field">
+        <label>Title Line 1</label>
+        <input type="text" id="title_line1" value="Restyle Photos" oninput="liveUpdate()">
+      </div>
+      <div class="field">
+        <label>Title Line 2</label>
+        <input type="text" id="title_line2" value="with AI Magic" oninput="liveUpdate()">
+      </div>
+      <div class="field">
+        <label>Main Image URL</label>
+        <input type="text" id="main_image"
+          value="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=900&q=80"
+          oninput="liveUpdate()">
+      </div>
+      <div class="field">
+        <label>Circle Image URL</label>
+        <input type="text" id="circle_image"
+          value="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=450&q=80"
+          oninput="liveUpdate()">
+      </div>
+    </div>
+
+    <!-- Colors -->
+    <div class="section">
+      <div class="section-title">Colors</div>
+      <div class="field">
+        <label>Accent Start (đỏ coral)</label>
+        <div class="color-row">
+          <input type="color" id="c_start" value="#FF5858"
+            oninput="sync(this,'c_start_t'); liveUpdate()">
+          <input type="text"  id="c_start_t" value="#FF5858"
+            oninput="syncP(this,'c_start'); liveUpdate()">
+        </div>
+      </div>
+      <div class="field">
+        <label>Accent End (hồng nhạt)</label>
+        <div class="color-row">
+          <input type="color" id="c_end" value="#F9A3A3"
+            oninput="sync(this,'c_end_t'); liveUpdate()">
+          <input type="text"  id="c_end_t" value="#F9A3A3"
+            oninput="syncP(this,'c_end'); liveUpdate()">
+        </div>
+      </div>
+      <div class="field">
+        <label>Title Font Size (px)</label>
+        <input type="text" id="font_size" value="87.5" oninput="liveUpdate()">
+      </div>
+    </div>
+
+    <!-- CSS Override -->
+    <div class="section">
+      <div class="section-title">CSS Override</div>
+      <div class="field">
+        <textarea id="css_override" placeholder="/* CSS tùy chỉnh */
+.restyle-photos-with { letter-spacing: 2px; }"></textarea>
+      </div>
+      <button class="apply-btn" onclick="liveUpdate()">Apply CSS</button>
+    </div>
+
+  </div>
+
+  <div class="canvas-area" id="canvas-area">
+    <div class="zoom-bar">
+      <button class="zoom-btn" onclick="changeZoom(-0.05)">−</button>
+      <span class="zoom-label" id="zoom-label">35%</span>
+      <button class="zoom-btn" onclick="changeZoom(0.05)">+</button>
+      <button class="zoom-btn" onclick="fitZoom()" title="Fit">⊞</button>
+      <span class="canvas-size-info">1080 × 1920 px</span>
+    </div>
+    <div class="preview-wrapper" id="preview-wrapper">
+      <div class="preview-shadow">
+        <iframe id="preview-frame" sandbox="allow-same-origin allow-scripts"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✓ Applied</div>
+
+<script>
+  let zoom = 0.35;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    fitZoom();
+    liveUpdate();
+  });
+
+  function changeZoom(d) { zoom = Math.min(1, Math.max(0.1, zoom + d)); applyZoom(); }
+  function fitZoom() {
+    const area = document.getElementById('canvas-area');
+    zoom = Math.min((area.clientWidth - 64) / 1080, (area.clientHeight - 100) / 1920);
+    applyZoom();
+  }
+  function applyZoom() {
+    const w = document.getElementById('preview-wrapper');
+    w.style.transform = `scale(${zoom})`;
+    w.style.marginBottom = `${1920 * zoom - 1920}px`;
+    document.getElementById('zoom-label').textContent = Math.round(zoom * 100) + '%';
+  }
+
+  function sync(picker, textId)  { document.getElementById(textId).value = picker.value; }
+  function syncP(input, pickId)  { if (/^#[0-9a-fA-F]{6}$/.test(input.value)) document.getElementById(pickId).value = input.value; }
+
+  function liveUpdate() {
+    const frame      = document.getElementById('preview-frame');
+    const title1     = esc(v('title_line1'));
+    const title2     = esc(v('title_line2'));
+    const mainImg    = v('main_image');
+    const circleImg  = v('circle_image');
+    const cStart     = v('c_start');
+    const cEnd       = v('c_end');
+    const fontSize   = parseFloat(v('font_size')) || 87.5;
+    const cssOverride = document.getElementById('css_override').value;
+
+    frame.srcdoc = `<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+:root {
+  --accent-start: ${cStart};
+  --accent-end:   ${cEnd};
+  --title-size:   ${fontSize}px;
+}
+</style>
+<link rel="stylesheet" href="/templates/template2/styles.css">
+<style>${cssOverride}</style>
+</head>
+<body>
+<div class="frame">
+  <div class="restyle-photos-with">${title1}<br />${title2}</div>
+  <div class="div">
+    <img class="image" src="${mainImg}" onerror="this.style.background='#333'" />
+  </div>
+  <div class="image-wrapper">
+    <img class="image-2" src="${circleImg}" onerror="this.style.background='#bcaf9c'" />
+  </div>
+  <svg class="arrow" viewBox="0 0 160 200" fill="none">
+    <path d="M130 20 C110 80, 50 120, 20 180"
+          stroke="white" stroke-width="10" stroke-linecap="round" fill="none"/>
+    <path d="M4 160 L22 185 L42 168"
+          stroke="white" stroke-width="10"
+          stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </svg>
+</div>
+</body></html>`;
+  }
+
+  function v(id)  { return document.getElementById(id)?.value || ''; }
+  function esc(s) { return s.replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Turn Words Into Beautiful Art</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;800;600;500&display=swap');
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #000;
+      min-height: 1920px;
+      min-width: 1080px;
+      overflow-x: auto;
+    }
+    .figma-bg {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      margin: 0 auto;
+      background: linear-gradient(180deg, #000 20.715%, #ff5858 55.485%, #f9a3a3 99.469%);
+      overflow: hidden;
+      font-family: 'Poppins', Arial, sans-serif;
+    }
+    .figma-title {
+      position: absolute;
+      left: 50%;
+      top: 181.05px;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: center;
+      font-family: 'Poppins', Arial, sans-serif;
+      font-weight: 800;
+      font-size: 87.54px;
+      line-height: 103px;
+      text-transform: capitalize;
+      background: linear-gradient(90deg, #f37878, #ffe9e9);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-fill-color: transparent;
+      white-space: nowrap;
+      margin-bottom: 0;
+      z-index: 2;
+    }
+    .figma-title p {
+      margin: 0;
+    }
+    .main-img-container {
+      position: absolute;
+      left: 87px;
+      top: 368px;
+      width: 906px;
+      height: 1708px;
+      border: 12px solid #fe9d9c;
+      border-radius: 80px 80px 0 0;
+      overflow: clip;
+      background: #fff;
+      z-index: 1;
+    }
+    .main-img-inner {
+      position: absolute;
+      left: 50%;
+      top: -0.48px;
+      width: 928px;
+      height: 1552px;
+      transform: translateX(-50%);
+      overflow: clip;
+    }
+    .main-img-inner-img {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 928px;
+      height: 1552px;
+      overflow: hidden;
+    }
+    .main-img-inner-img img {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 111.49%;
+      height: 100%;
+      max-width: none;
+    }
+    .main-img-overlay-right {
+      position: absolute;
+      left: 652px;
+      top: 0;
+      width: 276px;
+      height: 1552px;
+      background: rgba(217,27,103,0.26);
+      z-index: 2;
+    }
+    .main-img-overlay-left {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 300px;
+      height: 1552px;
+      background: rgba(99,192,0,0.26);
+      z-index: 2;
+    }
+    .main-img-divider {
+      position: absolute;
+      left: 300px;
+      top: 0;
+      width: 4px;
+      height: 1552px;
+      background: #fff;
+      border-radius: 2px;
+      z-index: 3;
+      opacity: 0.95;
+    }
+    .main-img-divider2 {
+      position: absolute;
+      left: 652px;
+      top: 0;
+      width: 4px;
+      height: 1552px;
+      background: #fff;
+      border-radius: 2px;
+      z-index: 3;
+      opacity: 0.95;
+    }
+    .swatch-container {
+      position: absolute;
+      left: 35px;
+      top: 1175px;
+      width: 259px;
+      height: 259px;
+      background: #fff;
+      border-radius: 20px;
+      overflow: clip;
+      z-index: 4;
+    }
+    .swatch-img-inner {
+      position: absolute;
+      left: 0px;
+      top: 0px;
+      width: 259px;
+      height: 259px;
+      overflow: hidden;
+    }
+    .swatch-img-inner img {
+      width: 100%;
+      height: 100%;
+      max-width: none;
+    }
+    .swatch-overlay {
+      position: absolute;
+      left: 00px;
+      top: 0;
+      width: 259px;
+      height: 259px;
+      background: rgba(99,192,0,0.26);
+      z-index: 2;
+    }
+    .swatch-container2 {
+      position: absolute;
+      left: 615px;
+      top: 1175px;
+      width: 259px;
+      height: 259px;
+      background: #fff;
+      border-radius: 20px;
+      overflow: clip;
+      z-index: 4;
+    }
+    .swatch-img-inner2 {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 259px;
+      height: 259px;
+      overflow: hidden;
+    }
+    .swatch-img-inner2 img {
+      width: 111.49%;
+      height: 167.24%;
+      max-width: none;
+    }
+    .swatch-overlay2 {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 259px;
+      height: 259px;
+      background: rgba(217,27,103,0.26);
+      z-index: 2;
+    }
+    .swatch-center-container {
+      position: absolute;
+      left: 310px;
+      top: 1163px;
+      width: 284px;
+      height: 284px;
+      background: #fff;
+      border: 4.39px solid #fe9d9c;
+      border-radius: 21.93px;
+      overflow: clip;
+      z-index: 4;
+    }
+    .swatch-center-img-inner {
+      position: absolute;
+      left: -0.4px;
+      top: 0;
+      width: 284.4px;
+      height: 284px;
+      overflow: hidden;
+    }
+    .swatch-center-img-inner img {
+      width: 100%;
+      height: 150.21%;
+      max-width: none;
+    }
+    .swatch-label {
+      position: absolute;
+      left: 190.5px;
+      top: 1496px;
+      transform: translate(-50%, -50%);
+      font-family: 'Poppins', Arial, sans-serif;
+      font-weight: 600;
+      font-size: 28px;
+      color: #fff;
+      text-align: center;
+      text-transform: uppercase;
+      white-space: nowrap;
+      z-index: 5;
+    }
+    .swatch-label2 {
+      left: 381px;
+      font-weight: 500;
+      text-transform: none;
+    }
+    .swatch-label3 {
+      left: 561px;
+      font-weight: 500;
+      text-transform: none;
+    }
+    .swatch-label4 {
+      left: 759px;
+      font-weight: 500;
+      text-transform: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="figma-bg">
+    <div class="figma-title">
+      <p>{{text_1}}</p>
+    </div>
+    <div class="main-img-container">
+      <div class="main-img-inner">
+        <div class="main-img-inner-img">
+          <img src="{{image_1}}" alt="Main Art" />
+        </div>
+        <div class="main-img-overlay-right"></div>
+        <div class="main-img-overlay-left"></div>
+        <div class="main-img-divider"></div>
+        <div class="main-img-divider2"></div>
+      </div>
+      <div class="swatch-container">
+        <div class="swatch-img-inner">
+          <img src="{{image_1}}" alt="Swatch 1" />
+        </div>
+        <div class="swatch-overlay"></div>
+      </div>
+      <div class="swatch-container2">
+        <div class="swatch-img-inner2">
+          <img src="{{image_1}}" alt="Swatch 2" />
+        </div>
+        <div class="swatch-overlay2"></div>
+      </div>
+      <div class="swatch-center-container">
+        <div class="swatch-center-img-inner">
+          <img src="{{image_1}}" alt="Swatch Center" />
+        </div>
+      </div>
+      <div class="swatch-label">Natural</div>
+      <div class="swatch-label swatch-label2">RED</div>
+      <div class="swatch-label swatch-label3">YELLOW</div>
+      <div class="swatch-label swatch-label4">GREEN</div>
+    </div>
+  </div>
+</body>
+</html>

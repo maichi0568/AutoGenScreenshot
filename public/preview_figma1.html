@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Figma Template 1 Preview — ScreenshotAI</title>
+<style>
+  :root {
+    --bg: #0f0f17; --surface: #1a1a2e; --surface2: #16213e;
+    --accent: #7c3aed; --accent2: #a855f7;
+    --text: #f1f5f9; --muted: #94a3b8; --border: #2d2d4e;
+    --success: #22c55e;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+    height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+  .topbar { height: 56px; background: var(--surface); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 20px; gap: 16px; flex-shrink: 0; }
+  .topbar-logo { font-size: 16px; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .topbar-sep { width: 1px; height: 24px; background: var(--border); }
+  .template-badge { background: var(--accent); color: white; font-size: 12px;
+    font-weight: 600; padding: 4px 12px; border-radius: 20px; }
+  .topbar-right { margin-left: auto; display: flex; gap: 10px; }
+  .btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white; }
+  .btn-primary:hover { opacity: 0.85; }
+
+  .main { flex: 1; display: flex; overflow: hidden; }
+
+  .sidebar { width: 320px; background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .section { padding: 20px; border-bottom: 1px solid var(--border); }
+  .section-title { font-size: 11px; font-weight: 700; color: var(--muted);
+    letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 16px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+  .field input[type="text"], .field input[type="color"], .field textarea {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 13px; padding: 9px 12px; outline: none; }
+  .field input[type="color"] { height: 40px; padding: 4px 8px; cursor: pointer; }
+  .field input:focus, .field textarea:focus { border-color: var(--accent); }
+  .field textarea { resize: vertical; min-height: 200px;
+    font-family: 'SF Mono','Fira Code','Courier New',monospace; font-size: 12px; line-height: 1.6; }
+  .color-row { display: flex; gap: 8px; align-items: center; }
+  .color-row input[type="color"] { width: 56px; flex-shrink: 0; }
+  .color-row input[type="text"] { flex: 1; }
+  .apply-btn { width: 100%; margin-top: 10px; padding: 10px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+    font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .apply-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .canvas-area { flex: 1; display: flex; flex-direction: column; align-items: center;
+    overflow: auto; background: #09090f; padding: 32px; gap: 16px; }
+  .canvas-area::-webkit-scrollbar { width: 6px; height: 6px; }
+  .canvas-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .zoom-bar { display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 10; }
+  .zoom-btn { width: 32px; height: 32px; border-radius: 6px; background: var(--surface);
+    border: 1px solid var(--border); color: var(--text); font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .zoom-btn:hover { border-color: var(--accent); }
+  .zoom-label { font-size: 12px; color: var(--muted); min-width: 40px; text-align: center; }
+  .canvas-size-info { font-size: 11px; color: var(--muted); background: var(--surface);
+    padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border); }
+
+  .preview-wrapper { transform-origin: top center; transition: transform 0.2s; }
+  .preview-shadow { box-shadow: 0 40px 120px rgba(0,0,0,0.7); border-radius: 4px; overflow: hidden; }
+  iframe#preview-frame { display: block; width: 1080px; height: 1920px; border: none; background: #000; }
+
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface);
+    border: 1px solid var(--border); border-left: 3px solid var(--success);
+    padding: 12px 20px; border-radius: 10px; font-size: 13px; color: var(--text);
+    opacity: 0; transform: translateY(10px); transition: all 0.25s; z-index: 100; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-logo">ScreenshotAI</span>
+  <div class="topbar-sep"></div>
+  <span class="template-badge">figma1</span>
+  <div class="topbar-right">
+    <button class="btn btn-ghost" onclick="window.location='/'">← Back</button>
+    <button class="btn btn-primary" onclick="liveUpdate(); showToast('✓ Applied')">▶ Apply</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="sidebar">
+
+    <!-- Content -->
+    <div class="section">
+      <div class="section-title">Content</div>
+      <div class="field">
+        <label>Title Line 1</label>
+        <input type="text" id="title_line1" value="Restyle Photos" oninput="liveUpdate()">
+      </div>
+      <div class="field">
+        <label>Title Line 2</label>
+        <input type="text" id="title_line2" value="with AI Magic" oninput="liveUpdate()">
+      </div>
+      <div class="field">
+        <label>Main Image URL</label>
+        <input type="text" id="main_image"
+          value="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=900&q=80"
+          oninput="liveUpdate()">
+      </div>
+      <div class="field">
+        <label>Circle Image URL</label>
+        <input type="text" id="circle_image"
+          value="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=450&q=80"
+          oninput="liveUpdate()">
+      </div>
+    </div>
+
+    <!-- Colors -->
+    <div class="section">
+      <div class="section-title">Colors</div>
+      <div class="field">
+        <label>Accent Start (đỏ coral)</label>
+        <div class="color-row">
+          <input type="color" id="c_start" value="#FF5858"
+            oninput="sync(this,'c_start_t'); liveUpdate()">
+          <input type="text"  id="c_start_t" value="#FF5858"
+            oninput="syncP(this,'c_start'); liveUpdate()">
+        </div>
+      </div>
+      <div class="field">
+        <label>Accent End (hồng nhạt)</label>
+        <div class="color-row">
+          <input type="color" id="c_end" value="#F9A3A3"
+            oninput="sync(this,'c_end_t'); liveUpdate()">
+          <input type="text"  id="c_end_t" value="#F9A3A3"
+            oninput="syncP(this,'c_end'); liveUpdate()">
+        </div>
+      </div>
+      <div class="field">
+        <label>Title Font Size (px)</label>
+        <input type="text" id="font_size" value="87.5" oninput="liveUpdate()">
+      </div>
+    </div>
+
+    <!-- CSS Override -->
+    <div class="section">
+      <div class="section-title">CSS Override</div>
+      <div class="field">
+        <textarea id="css_override" placeholder="/* CSS tùy chỉnh */
+.restyle-photos-with { letter-spacing: 2px; }"></textarea>
+      </div>
+      <button class="apply-btn" onclick="liveUpdate()">Apply CSS</button>
+    </div>
+
+  </div>
+
+  <div class="canvas-area" id="canvas-area">
+    <div class="zoom-bar">
+      <button class="zoom-btn" onclick="changeZoom(-0.05)">−</button>
+      <span class="zoom-label" id="zoom-label">35%</span>
+      <button class="zoom-btn" onclick="changeZoom(0.05)">+</button>
+      <button class="zoom-btn" onclick="fitZoom()" title="Fit">⊞</button>
+      <span class="canvas-size-info">1080 × 1920 px</span>
+    </div>
+    <div class="preview-wrapper" id="preview-wrapper">
+      <div class="preview-shadow">
+        <iframe id="preview-frame" sandbox="allow-same-origin allow-scripts"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✓ Applied</div>
+
+<script>
+  let zoom = 0.35;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    fitZoom();
+    liveUpdate();
+  });
+
+  function changeZoom(d) { zoom = Math.min(1, Math.max(0.1, zoom + d)); applyZoom(); }
+  function fitZoom() {
+    const area = document.getElementById('canvas-area');
+    zoom = Math.min((area.clientWidth - 64) / 1080, (area.clientHeight - 100) / 1920);
+    applyZoom();
+  }
+  function applyZoom() {
+    const w = document.getElementById('preview-wrapper');
+    w.style.transform = `scale(${zoom})`;
+    w.style.marginBottom = `${1920 * zoom - 1920}px`;
+    document.getElementById('zoom-label').textContent = Math.round(zoom * 100) + '%';
+  }
+
+  function sync(picker, textId)  { document.getElementById(textId).value = picker.value; }
+  function syncP(input, pickId)  { if (/^#[0-9a-fA-F]{6}$/.test(input.value)) document.getElementById(pickId).value = input.value; }
+
+  function liveUpdate() {
+    const frame      = document.getElementById('preview-frame');
+    const title1     = esc(v('title_line1'));
+    const title2     = esc(v('title_line2'));
+    const mainImg    = v('main_image');
+    const circleImg  = v('circle_image');
+    const cStart     = v('c_start');
+    const cEnd       = v('c_end');
+    const fontSize   = parseFloat(v('font_size')) || 87.5;
+    const cssOverride = document.getElementById('css_override').value;
+
+    const ARROW_SVG = `<svg class="arrow" width="237" height="228" viewBox="0 0 163 199" fill="none"><path opacity="0.2" d="M135.669 129.792L137 128.229C138.458 126.537 139.96 124.775 141.251 122.912L145.692 116.774C146.684 115.238 147.612 113.671 148.508 112.156L150.054 109.558C150.486 108.827 150.917 108.096 151.328 107.359L152.924 104.032C153.225 103.376 153.531 102.732 153.841 102.099C154.537 100.658 155.25 99.1684 155.862 97.5929L158.153 91.2927L158.739 89.6447L159.186 87.9512L159.977 84.9027C160.977 81.5186 161.452 78.1749 161.92 74.9566C162.044 74.0505 162.187 73.1509 162.315 72.2569L162.335 72.072C162.453 70.5256 162.535 68.9784 162.606 67.4489L162.693 65.9138C162.7 65.5969 162.718 65.2623 162.74 64.9399C162.789 64.2114 162.822 63.4884 162.785 62.7637L162.649 59.847C162.476 52.419 161.093 44.8703 158.393 36.7198L156.459 31.3943L154.056 26.3619C153.339 24.7225 152.428 23.2217 151.53 21.7571L149.833 18.9561C149.364 18.1425 148.821 17.2732 148.185 16.4793L144.903 12.0944C144.119 11.0396 143.234 10.0897 142.393 9.16499C141.969 8.71747 141.561 8.26438 141.12 7.76857L139.275 5.75936C138.801 5.22083 138.291 4.77712 137.802 4.33989C137.571 4.13659 137.345 3.94536 137.097 3.69376L133.003 1.30445e-05L127.558 3.37223C139.82 25.382 139.157 53.1391 125.84 75.7873C125.323 76.6175 124.782 77.4292 124.261 78.2474C123.904 78.8006 123.544 79.3417 123.198 79.8772L121.96 81.7897L120.515 83.6131C120.084 84.1525 119.668 84.6862 119.252 85.2199C118.692 85.9294 118.151 86.6454 117.585 87.3428L114.342 90.8311C114.102 91.0822 113.878 91.3277 113.669 91.5676C113.407 91.8541 113.165 92.147 112.849 92.426L111.052 94.0491C110.551 94.4909 110.085 94.9336 109.599 95.3698C109.287 95.6609 108.985 95.9344 108.684 96.2078C108.33 96.5278 107.976 96.8478 107.613 97.1436C106.723 97.8087 105.868 98.4748 105.012 99.1409C103.779 100.108 102.598 101.029 101.356 101.877C100.939 102.165 100.528 102.424 100.086 102.694L99.956 102.768L99.9296 102.792L99.846 102.849C98.052 104.143 96.0253 105.276 94.06 106.386C93.3807 106.77 92.7015 107.153 92.0266 107.549L87.9029 109.525L87.0148 109.957L86.0697 110.328L83.9684 111.159C82.6848 111.653 81.377 112.128 80.0868 112.555C75.9548 113.933 71.7043 114.985 67.4979 115.679L67.0716 115.752L66.5528 115.954L64.7374 116.518C64.7548 113.545 64.6361 110.39 64.3924 106.938C64.0396 102.419 63.5084 98.3195 62.786 94.4128L60.1911 87.6049L56.459 95.2621C55.0336 103.804 49.4347 113.274 40.2848 122.653C31.8298 131.356 20.4171 139.971 6.38094 148.268L4.54225 150.686L6.10084 152.963C16.1536 163.09 26.9945 171.072 39.2451 177.325C54.9599 185.299 72.5249 190.073 91.4304 191.49L101.189 192.223L94.6418 186.81C91.2883 184.05 87.9503 180.998 84.4545 177.511C81.7425 174.792 79.5643 172.439 77.6409 170.212C98.7485 161.629 117.609 149.161 131.071 134.825C132.773 133.182 134.238 131.46 135.669 129.792Z" fill="#231F20"/><path d="M131.138 136.551L132.469 134.988C133.927 133.296 135.429 131.534 136.72 129.671L141.161 123.533C142.153 121.997 143.081 120.43 143.977 118.915L145.523 116.317C145.954 115.586 146.386 114.855 146.797 114.118L148.397 110.803C148.698 110.147 149.004 109.503 149.314 108.87C150.01 107.429 150.723 105.939 151.335 104.364L153.627 98.0636L154.212 96.4156L154.659 94.7222L155.45 91.6737C156.45 88.2896 156.925 84.9458 157.393 81.7276C157.517 80.8215 157.66 79.9219 157.788 79.0278L157.808 78.8429C157.926 77.2966 158.008 75.7494 158.08 74.2198L158.166 72.6847C158.173 72.3678 158.191 72.0333 158.213 71.7108C158.247 70.9879 158.295 70.2594 158.259 69.5346L158.122 66.6179C157.949 59.1899 156.566 51.6413 153.866 43.4908L151.932 38.1653L149.529 33.1329C148.812 31.4934 147.901 29.9926 147.003 28.5281L145.307 25.727C144.837 24.9135 144.295 24.0442 143.658 23.2503L140.376 18.8654C139.592 17.8105 138.707 16.8607 137.866 15.9359C137.442 15.4884 137.034 15.0353 136.593 14.5395L134.748 12.5303C134.274 11.9918 133.765 11.5481 133.275 11.1108C133.044 10.9075 132.818 10.7163 132.57 10.4647L128.476 6.77096L123.031 10.1432C135.293 32.1529 134.63 59.91 121.313 82.5583C120.796 83.3885 120.255 84.2002 119.734 85.0183C119.378 85.5715 119.017 86.1127 118.672 86.6482L117.433 88.5607L115.988 90.3841C115.557 90.9234 115.141 91.4572 114.726 91.9909C114.165 92.7004 113.624 93.4163 113.059 94.1137L109.815 97.6021C109.575 97.8531 109.351 98.0987 109.142 98.3386C108.88 98.625 108.638 98.9179 108.322 99.197L106.525 100.82C106.024 101.262 105.558 101.705 105.072 102.141C104.76 102.432 104.459 102.705 104.157 102.979C103.803 103.299 103.449 103.619 103.087 103.915C102.196 104.58 101.341 105.246 100.486 105.912C99.2522 106.879 98.0716 107.8 96.8295 108.648C96.4118 108.936 96.0051 109.207 95.5588 109.465L95.4291 109.539L95.4027 109.562L95.3192 109.62C93.5252 110.914 91.4984 112.047 89.5332 113.157C88.8539 113.541 88.1747 113.924 87.4998 114.32L83.3761 116.296L82.488 116.728L81.5429 117.098L79.4262 117.936C78.1426 118.429 76.8348 118.904 75.5446 119.332C71.4125 120.71 67.162 121.762 62.9557 122.456L62.5294 122.529L62.0107 122.731L60.1952 123.295C60.2126 120.322 60.094 117.166 59.8502 113.715C59.4974 109.195 58.9662 105.096 58.2438 101.189L55.6489 94.3814L51.9168 102.039C50.4914 110.58 44.8925 120.05 35.7426 129.429C27.2876 138.132 15.8749 146.748 1.83871 155.045L1.92852e-05 157.462L1.5586 159.739C11.6114 169.866 22.4523 177.848 34.7029 184.101C50.4177 192.076 67.9827 196.85 86.8882 198.266L96.6464 199L90.0996 193.587C86.7461 190.827 83.4081 187.775 79.9123 184.288C77.2003 181.568 75.0221 179.216 73.0987 176.989C94.2064 168.406 113.067 155.937 126.529 141.601C128.242 139.94 129.722 138.214 131.138 136.551Z" fill="white"/><path d="M55.1063 101.989C55.877 106.029 56.3642 110.103 56.6843 114.293C56.9913 118.446 57.1334 122.768 56.9437 126.993C56.9437 126.993 57.3415 126.889 57.9481 126.737C58.5261 126.555 59.2888 126.305 60.0668 126.05C60.8339 125.812 61.6119 125.557 62.1746 125.38C62.4559 125.291 62.7065 125.214 62.8801 125.164C63.0494 125.103 63.1417 125.069 63.1417 125.069C68.9918 124.106 74.7084 122.536 80.4232 120.337L82.5706 119.488L83.6542 119.067L84.6917 118.567L88.9539 116.541C91.6688 114.953 94.5594 113.466 97.2262 111.554C100.106 109.797 102.423 107.739 105.114 105.75C106.377 104.717 107.498 103.585 108.723 102.498L110.556 100.834C111.174 100.282 111.665 99.666 112.234 99.0763L115.59 95.4653C116.613 94.2053 117.572 92.9138 118.601 91.624L120.138 89.6713L121.454 87.6352C122.331 86.2639 123.264 84.8999 124.144 83.4867C137.461 60.8385 139.168 32.3604 126.011 8.74849L130.104 12.4422C130.769 13.0754 131.523 13.6629 132.135 14.3426L133.984 16.3638C135.179 17.7343 136.542 19.0433 137.631 20.5068L140.922 24.9158C141.502 25.6485 141.989 26.4146 142.45 27.2041L143.879 29.5556C144.831 31.1233 145.823 32.7039 146.554 34.3796L148.948 39.3878L150.852 44.6288C153.196 51.7054 154.793 59.2177 154.972 67.0944L155.106 70.0529C155.149 71.0351 155.045 72.0434 155.007 73.0414C154.9 75.0486 154.813 77.0622 154.665 79.0983C154.031 83.1558 153.604 87.3023 152.377 91.4523L151.562 94.578L151.141 96.1524L150.591 97.7056L148.31 103.988C147.485 106.079 146.42 108.133 145.458 110.232L143.953 113.376C143.385 114.402 142.763 115.421 142.16 116.447C140.934 118.491 139.742 120.578 138.427 122.615L134.078 128.623C132.646 130.674 130.997 132.558 129.356 134.466C127.716 136.374 126.093 138.331 124.215 140.161C110.005 155.315 89.6809 168.07 68.266 176.19C71.0762 179.708 74.102 182.955 77.3585 186.215C80.6062 189.45 84.0474 192.643 87.7238 195.668C67.1901 194.132 50.3616 188.749 36.7336 181.821C23.0728 174.85 12.3927 166.304 3.46871 157.175C16.8762 149.256 28.9592 140.425 38.1751 130.94C47.3514 121.442 53.5375 111.335 55.1063 101.989Z" fill="#FAFAFA"/></svg>`;
+
+    frame.srcdoc = `<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-stop2-color: ${cStart};
+  --bg-stop3-color: ${cEnd};
+  --title-size: ${fontSize}px;
+}
+</style>
+<link rel="stylesheet" href="/templates/figma1/styles.css">
+<style>${cssOverride}</style>
+</head>
+<body>
+<div class="frame">
+  <div class="title">${title1}<br/>${title2}</div>
+  <div class="main-frame">
+    <img class="main-image" src="${mainImg}" onerror="this.style.background='#333'" />
+  </div>
+  <div class="circle-frame">
+    <img class="circle-image" src="${circleImg}" onerror="this.style.background='#bcaf9c'" />
+  </div>
+  ${ARROW_SVG}
+</div>
+</body></html>`;
+  }
+
+  function v(id)  { return document.getElementById(id)?.value || ''; }
+  function esc(s) { return s.replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+</script>
+</body>
+</html>

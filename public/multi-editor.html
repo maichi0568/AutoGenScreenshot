@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScreenshotAI — Multi Editor</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#09090b;color:#f1f5f9;font-family:'Inter',system-ui,sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ===== TOPBAR ===== */
+.topbar{height:56px;background:#0f0f14;border-bottom:1px solid #1e1e2e;display:flex;align-items:center;padding:0 24px;gap:16px;flex-shrink:0;z-index:100}
+.topbar-logo{font-size:18px;font-weight:800;background:linear-gradient(135deg,#F06060,#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.topbar-sep{width:1px;height:24px;background:#27272a}
+.topbar-title{font-size:14px;font-weight:600;color:#a1a1aa}
+.topbar-spacer{flex:1}
+.btn-tb{padding:8px 18px;border-radius:8px;border:1px solid #27272a;background:transparent;color:#a1a1aa;font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:6px;transition:all .15s;font-family:inherit}
+.btn-tb:hover{border-color:#3f3f46;color:#f1f5f9}
+.btn-gen{background:linear-gradient(135deg,#F06060,#c44040);border:none;color:#fff;font-weight:700;box-shadow:0 4px 16px rgba(240,96,96,.25)}
+.btn-gen:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(240,96,96,.35)}
+
+/* ===== LAYOUT ===== */
+.layout{display:flex;flex:1;overflow:hidden}
+
+/* ===== SIDEBAR ===== */
+.sidebar{width:300px;flex-shrink:0;background:#0f0f14;border-right:1px solid #1e1e2e;overflow-y:auto;display:flex;flex-direction:column}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-thumb{background:#27272a;border-radius:2px}
+
+.sb-section{padding:18px;border-bottom:1px solid #1a1a26}
+.sb-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:#52525b;margin-bottom:12px}
+.sb-field{margin-bottom:14px}
+.sb-field label{display:block;font-size:13px;font-weight:500;color:#a1a1aa;margin-bottom:6px}
+.sb-input{width:100%;padding:10px 12px;background:#111113;border:1px solid #27272a;border-radius:8px;color:#f1f5f9;font-size:13px;font-family:inherit;outline:none;transition:border-color .2s}
+.sb-input:focus{border-color:rgba(240,96,96,.5)}
+.sb-textarea{resize:vertical;min-height:56px}
+
+.color-row{display:flex;gap:8px;align-items:center}
+.color-pick{width:40px;height:40px;border:2px solid #27272a;border-radius:8px;cursor:pointer;padding:0;background:none}
+.color-pick::-webkit-color-swatch-wrapper{padding:2px}
+.color-pick::-webkit-color-swatch{border:none;border-radius:4px}
+.color-hex{flex:1}
+
+/* Selected lang chips (shown below dropdown) */
+.lang-selected{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.lang-chip{padding:6px 12px;background:rgba(240,96,96,.1);border:1px solid rgba(240,96,96,.3);border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;user-select:none;color:#F9A3A3;display:flex;align-items:center;gap:6px}
+.lang-chip:hover{border-color:#F06060;background:rgba(240,96,96,.18)}
+.lang-chip .lang-x{font-size:14px;line-height:1;opacity:.6;transition:opacity .15s}
+.lang-chip:hover .lang-x{opacity:1}
+
+/* Dropdown */
+.dropdown-wrap{position:relative}
+.dropdown-btn{width:100%;padding:10px 12px;background:#111113;border:1px solid #27272a;border-radius:8px;color:#a1a1aa;font-size:13px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:border-color .2s}
+.dropdown-btn:hover{border-color:#3f3f46}
+.dropdown-btn.open{border-color:rgba(240,96,96,.5);border-radius:8px 8px 0 0}
+.dropdown-btn svg{flex-shrink:0;transition:transform .2s}
+.dropdown-btn.open svg{transform:rotate(180deg)}
+.dropdown-panel{position:absolute;top:100%;left:0;right:0;background:#111113;border:1px solid rgba(240,96,96,.3);border-top:none;border-radius:0 0 8px 8px;z-index:50;max-height:240px;display:flex;flex-direction:column;box-shadow:0 12px 32px rgba(0,0,0,.5)}
+.dropdown-panel.hidden{display:none}
+.dropdown-search{padding:8px 10px;border-bottom:1px solid #1e1e2e;flex-shrink:0}
+.dropdown-search input{width:100%;padding:7px 10px;background:#0c0c10;border:1px solid #27272a;border-radius:6px;color:#f1f5f9;font-size:12px;font-family:inherit;outline:none}
+.dropdown-search input:focus{border-color:rgba(240,96,96,.4)}
+.dropdown-search input::placeholder{color:#3f3f46}
+.dropdown-list{overflow-y:auto;flex:1}
+.dropdown-list::-webkit-scrollbar{width:4px}
+.dropdown-list::-webkit-scrollbar-thumb{background:#27272a;border-radius:2px}
+.dropdown-item{padding:9px 12px;font-size:13px;color:#a1a1aa;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background .1s}
+.dropdown-item:hover{background:#1a1a26}
+.dropdown-item.selected{color:#F9A3A3;background:rgba(240,96,96,.06)}
+.dropdown-item .di-check{width:16px;height:16px;border-radius:4px;border:1.5px solid #3f3f46;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.dropdown-item.selected .di-check{border-color:#F06060;background:#F06060}
+.dropdown-item .di-check svg{opacity:0}
+.dropdown-item.selected .di-check svg{opacity:1}
+
+/* Font dropdown */
+.font-preview{font-size:14px;color:#e4e4e7;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+
+/* Toggle buttons */
+.toggle-row{display:flex;gap:4px;background:#0c0c10;border-radius:8px;padding:3px}
+.toggle-btn{flex:1;padding:7px 12px;border:none;border-radius:6px;background:transparent;color:#52525b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+.toggle-btn:hover{color:#a1a1aa}
+.toggle-btn.active{background:rgba(240,96,96,.15);color:#F9A3A3}
+
+/* ===== Per-template text edit panel ===== */
+.text-panel{display:none;padding:18px;border-bottom:1px solid #1a1a26;animation:fadeIn .2s ease}
+.text-panel.visible{display:block}
+.text-panel-header{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.text-panel-badge{padding:3px 10px;background:rgba(240,96,96,.1);border:1px solid rgba(240,96,96,.2);border-radius:6px;font-size:11px;font-weight:600;color:#F9A3A3}
+.text-panel-name{font-size:13px;font-weight:600;color:#e4e4e7}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== MAIN AREA ===== */
+.main-area{flex:1;overflow-y:auto;padding:28px;background:#09090b}
+.main-area::-webkit-scrollbar{width:6px}
+.main-area::-webkit-scrollbar-thumb{background:#27272a;border-radius:3px}
+
+.tpl-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:12px}
+.tpl-item{background:#111113;border:2px solid #27272a;border-radius:16px;overflow:hidden;cursor:pointer;transition:all .2s;position:relative}
+.tpl-item:hover{border-color:#3f3f46;transform:translateY(-2px)}
+.tpl-item.active{border-color:#F06060;box-shadow:0 0 0 3px rgba(240,96,96,.15)}
+.tpl-item-preview{width:100%;aspect-ratio:9/16;background:#000;overflow:hidden;position:relative}
+.tpl-item-preview iframe{border:none;transform-origin:top left;pointer-events:none;position:absolute;top:0;left:0}
+.tpl-item-footer{padding:12px 14px;border-top:1px solid #1e1e2e;display:flex;align-items:center;justify-content:space-between}
+.tpl-item-name{font-size:13px;font-weight:600;color:#a1a1aa}
+.tpl-item-feature{font-size:11px;color:#52525b}
+.tpl-item-badge{position:absolute;top:10px;left:10px;padding:3px 10px;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);border-radius:6px;font-size:11px;font-weight:600;color:#F9A3A3;z-index:2}
+
+/* ===== EMPTY ===== */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#3f3f46;text-align:center;padding:40px}
+.empty-state h2{font-size:20px;color:#52525b;margin-bottom:8px}
+.empty-state p{font-size:14px}
+
+/* ===== GENERATE RESULTS ===== */
+.gen-row{background:#111113;border:1px solid #27272a;border-radius:14px;overflow:hidden}
+.gen-row-header{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid #1e1e2e}
+.gen-row-flag{font-size:20px}
+.gen-row-lang{font-size:14px;font-weight:600;color:#e4e4e7}
+.gen-row-lang-code{font-size:11px;font-weight:600;color:#52525b;background:#18181b;padding:2px 8px;border-radius:4px}
+.gen-row-count{font-size:12px;color:#52525b}
+.gen-row-dl{display:flex;align-items:center;gap:6px;padding:8px 16px;background:rgba(240,96,96,.1);border:1px solid rgba(240,96,96,.2);border-radius:8px;color:#F9A3A3;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit}
+.gen-row-dl:hover:not(:disabled){background:rgba(240,96,96,.2);border-color:rgba(240,96,96,.4)}
+.gen-row-dl:disabled{opacity:.4;cursor:not-allowed}
+.gen-row-thumbs{display:flex;gap:14px;padding:18px 18px;overflow-x:auto;min-height:200px;align-items:flex-start}
+.gen-row-empty{color:#3f3f46;font-size:13px;font-style:italic}
+.gen-thumb{flex-shrink:0;width:220px;aspect-ratio:9/16;border-radius:10px;overflow:hidden;border:1px solid #27272a;transition:all .2s;display:block}
+.gen-thumb:hover{border-color:rgba(240,96,96,.5);transform:scale(1.03)}
+.gen-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin .8s linear infinite}
+
+@media(max-width:1200px){.tpl-grid{grid-template-columns:repeat(5,1fr)}}
+@media(max-width:900px){.tpl-grid{grid-template-columns:repeat(3,1fr)}.sidebar{width:260px}}
+</style>
+</head>
+<body>
+
+<!-- ===== TOPBAR ===== -->
+<div class="topbar">
+  <div class="topbar-logo">ScreenshotAI</div>
+  <div class="topbar-sep"></div>
+  <div class="topbar-title" id="topbar-title">Multi Editor</div>
+  <div class="topbar-spacer"></div>
+  <a class="btn-tb" href="/">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
+    Back
+  </a>
+  <button class="btn-tb btn-gen" id="btn-generate" onclick="generateAll()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Generate All
+  </button>
+</div>
+
+<!-- ===== LAYOUT ===== -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <!-- Global config -->
+    <div class="sb-section">
+      <div class="sb-label">Global Settings</div>
+      <div class="sb-field">
+        <label>Accent Start</label>
+        <div class="color-row">
+          <input type="color" class="color-pick" id="g-accent-start" value="#ff5858" oninput="onGlobalChange()">
+          <input type="text" class="sb-input color-hex" id="g-accent-start-hex" value="#ff5858" oninput="syncHex('g-accent-start',this.value)">
+        </div>
+      </div>
+      <div class="sb-field">
+        <label>Accent End</label>
+        <div class="color-row">
+          <input type="color" class="color-pick" id="g-accent-end" value="#f9a3a3" oninput="onGlobalChange()">
+          <input type="text" class="sb-input color-hex" id="g-accent-end-hex" value="#f9a3a3" oninput="syncHex('g-accent-end',this.value)">
+        </div>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-label">Font</div>
+      <div class="dropdown-wrap" id="font-dropdown-wrap">
+        <div class="dropdown-btn" id="font-dropdown-btn" onclick="toggleFontDropdown()">
+          <span id="font-dropdown-label" style="flex:1">Poppins</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="dropdown-panel hidden" id="font-dropdown-panel">
+          <div class="dropdown-search"><input type="text" placeholder="Search fonts..." oninput="onFontSearch(this.value)"></div>
+          <div class="dropdown-list" id="font-dropdown-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-label">Languages</div>
+      <div class="dropdown-wrap" id="lang-dropdown-wrap">
+        <div class="dropdown-btn" id="lang-dropdown-btn" onclick="toggleLangDropdown()">
+          <span id="lang-dropdown-label" style="flex:1">Select languages...</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="dropdown-panel hidden" id="lang-dropdown-panel">
+          <div class="dropdown-search"><input type="text" placeholder="Search languages..." oninput="onLangSearch(this.value)"></div>
+          <div class="dropdown-list" id="lang-dropdown-list"></div>
+        </div>
+      </div>
+      <div class="lang-selected" id="lang-selected"></div>
+    </div>
+
+    <!-- Per-template text panel: shown when clicking a template -->
+    <div class="sb-section" id="tpl-text-section" style="display:none">
+      <div class="sb-label" id="tpl-text-label">Template Text</div>
+      <div class="toggle-row" style="margin-bottom:10px">
+        <button class="toggle-btn active" id="tbtn-ai" onclick="setTplTaglineMode('ai')">AI Generate</button>
+        <button class="toggle-btn" id="tbtn-custom" onclick="setTplTaglineMode('custom')">Custom Text</button>
+      </div>
+      <div id="custom-fields-container"></div>
+    </div>
+  </div>
+
+  <!-- MAIN: Template Grid -->
+  <div class="main-area" id="main-area"></div>
+
+</div>
+
+<script>
+// ===== STATE =====
+const LANGUAGES = [
+  {code:'en',name:'English',flag:'🇬🇧'},{code:'ja',name:'Japanese',flag:'🇯🇵'},
+  {code:'vi',name:'Vietnamese',flag:'🇻🇳'},{code:'ko',name:'Korean',flag:'🇰🇷'},
+  {code:'zh',name:'Chinese',flag:'🇨🇳'},{code:'th',name:'Thai',flag:'🇹🇭'},
+  {code:'de',name:'German',flag:'🇩🇪'},{code:'fr',name:'French',flag:'🇫🇷'},
+  {code:'es',name:'Spanish',flag:'🇪🇸'},{code:'pt',name:'Portuguese',flag:'🇧🇷'},
+  {code:'id',name:'Indonesian',flag:'🇮🇩'},{code:'hi',name:'Hindi',flag:'🇮🇳'},
+  {code:'ar',name:'Arabic',flag:'🇸🇦'},{code:'tr',name:'Turkish',flag:'🇹🇷'},
+  {code:'ru',name:'Russian',flag:'🇷🇺'},{code:'it',name:'Italian',flag:'🇮🇹'},
+  {code:'nl',name:'Dutch',flag:'🇳🇱'},{code:'pl',name:'Polish',flag:'🇵🇱'},
+  {code:'ms',name:'Malay',flag:'🇲🇾'},{code:'sv',name:'Swedish',flag:'🇸🇪'},
+];
+
+const FONTS = [
+  'Poppins','Inter','Roboto','Montserrat','Open Sans','Lato','Raleway',
+  'Oswald','Playfair Display','Nunito','Source Sans 3','Ubuntu',
+  'Merriweather','Noto Sans','PT Sans','Rubik','Work Sans','Quicksand',
+  'Barlow','DM Sans','Outfit','Space Grotesk','Sora','Manrope','Lexend',
+];
+
+let templates = []; // [{key, code, name, featureName}]
+let selectedLangs = new Set(['en']);
+let selectedFont = 'Poppins';
+// Per-template tagline mode: { tplCode: 'ai'|'custom' }
+let tplTaglineModes = {};
+let activeIdx = -1;
+let langDropdownOpen = false;
+let fontDropdownOpen = false;
+
+function loadSelection() {
+  const raw = sessionStorage.getItem('selectedTemplates');
+  if (!raw) return;
+  try {
+    const arr = JSON.parse(raw);
+    templates = arr.map(t => ({
+      key: t.key,
+      code: t.code,
+      name: t.name,
+      featureName: t.featureName,
+    }));
+  } catch {}
+}
+
+let dynFieldConfig = {}; // loaded from API
+
+// ===== INIT =====
+async function init() {
+  loadSelection();
+
+  if (!templates.length) {
+    const params = new URLSearchParams(location.search);
+    const t = params.get('t');
+    if (t) {
+      templates = [{ key: 'single::' + t, code: t, name: t, featureName: '' }];
+    }
+  }
+
+  // Load dynamic field config
+  try {
+    const res = await fetch('/api/admin/template-fields');
+    dynFieldConfig = await res.json();
+  } catch {}
+
+  document.getElementById('topbar-title').textContent = templates.length + ' Template' + (templates.length !== 1 ? 's' : '');
+  renderLangDropdown();
+  renderLangChips();
+  renderFontDropdown();
+  loadFont(selectedFont);
+  renderGrid();
+
+  // Close dropdowns on outside click
+  document.addEventListener('click', e => {
+    if (langDropdownOpen && !document.getElementById('lang-dropdown-wrap').contains(e.target)) closeLangDropdown();
+    if (fontDropdownOpen && !document.getElementById('font-dropdown-wrap').contains(e.target)) closeFontDropdown();
+  });
+}
+
+// ===== FONT DROPDOWN =====
+function loadFont(fontName) {
+  const id = 'gfont-' + fontName.replace(/\s+/g, '-');
+  if (!document.getElementById(id)) {
+    const link = document.createElement('link');
+    link.id = id;
+    link.rel = 'stylesheet';
+    link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontName)}:wght@400;600;700;800&display=swap`;
+    document.head.appendChild(link);
+  }
+}
+
+function renderFontDropdown() {
+  const list = document.getElementById('font-dropdown-list');
+  list.innerHTML = FONTS.map(f => {
+    loadFont(f);
+    return `<div class="dropdown-item ${f===selectedFont?'selected':''}" onclick="selectFont('${f}')" data-name="${f.toLowerCase()}"
+        onmouseenter="previewFontHover('${f}')" onmouseleave="previewFontHover(null)">
+      <span class="di-check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+      <div style="flex:1;min-width:0">
+        <div class="font-preview" style="font-family:'${f}',sans-serif">${esc(f)}</div>
+        <div style="font-family:'${f}',sans-serif;font-size:11px;color:#52525b;margin-top:2px;font-weight:700">Transform Your Look</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleFontDropdown() {
+  fontDropdownOpen = !fontDropdownOpen;
+  document.getElementById('font-dropdown-btn').classList.toggle('open', fontDropdownOpen);
+  document.getElementById('font-dropdown-panel').classList.toggle('hidden', !fontDropdownOpen);
+}
+function closeFontDropdown() {
+  fontDropdownOpen = false;
+  document.getElementById('font-dropdown-btn').classList.remove('open');
+  document.getElementById('font-dropdown-panel').classList.add('hidden');
+}
+
+function selectFont(fontName) {
+  selectedFont = fontName;
+  loadFont(fontName);
+  document.getElementById('font-dropdown-label').textContent = fontName;
+  document.querySelectorAll('#font-dropdown-list .dropdown-item').forEach(el => {
+    el.classList.toggle('selected', el.dataset.name === fontName.toLowerCase());
+  });
+  closeFontDropdown();
+  // Full reload so font is baked into iframe URL
+  refreshAllPreviews();
+}
+
+// Live preview on hover — inject font directly into iframes
+let _hoverFont = null;
+function previewFontHover(fontName) {
+  if (fontName && fontName !== selectedFont) {
+    _hoverFont = fontName;
+    loadFont(fontName);
+    document.querySelectorAll('.tpl-item-preview iframe').forEach(iframe => {
+      try {
+        const doc = iframe.contentDocument;
+        if (!doc || !doc.head) return;
+        let el = doc.getElementById('_fhover');
+        if (!el) { el = doc.createElement('style'); el.id = '_fhover'; doc.head.appendChild(el); }
+        el.textContent = `@import url('https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontName)}:wght@400;600;700;800&display=swap');*{font-family:'${fontName}',sans-serif!important;}`;
+      } catch(e) {}
+    });
+  } else if (!fontName && _hoverFont) {
+    _hoverFont = null;
+    document.querySelectorAll('.tpl-item-preview iframe').forEach(iframe => {
+      try {
+        const el = iframe.contentDocument?.getElementById('_fhover');
+        if (el) el.remove();
+      } catch(e) {}
+    });
+  }
+}
+
+function onFontSearch(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('#font-dropdown-list .dropdown-item').forEach(el => {
+    el.style.display = el.dataset.name.includes(q) ? '' : 'none';
+  });
+}
+
+// ===== LANGUAGE DROPDOWN =====
+function renderLangDropdown() {
+  const list = document.getElementById('lang-dropdown-list');
+  list.innerHTML = LANGUAGES.map(l =>
+    `<div class="dropdown-item ${selectedLangs.has(l.code)?'selected':''}" id="ldi-${l.code}" onclick="toggleLang('${l.code}')" data-name="${l.name.toLowerCase()} ${l.code}">
+      <span class="di-check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+      <span>${l.flag}</span>
+      <span style="flex:1">${esc(l.name)}</span>
+      <span style="font-size:11px;color:#52525b">${l.code.toUpperCase()}</span>
+    </div>`
+  ).join('');
+  updateLangLabel();
+}
+
+function renderLangChips() {
+  const container = document.getElementById('lang-selected');
+  container.innerHTML = [...selectedLangs].map(code => {
+    const l = LANGUAGES.find(x => x.code === code);
+    if (!l) return '';
+    return `<div class="lang-chip" onclick="removeLang('${code}')">${l.flag} ${l.name} <span class="lang-x">&times;</span></div>`;
+  }).join('');
+}
+
+function updateLangLabel() {
+  const n = selectedLangs.size;
+  document.getElementById('lang-dropdown-label').textContent = n === 0 ? 'Select languages...' : n + ' language' + (n > 1 ? 's' : '') + ' selected';
+}
+
+function toggleLangDropdown() {
+  langDropdownOpen = !langDropdownOpen;
+  document.getElementById('lang-dropdown-btn').classList.toggle('open', langDropdownOpen);
+  document.getElementById('lang-dropdown-panel').classList.toggle('hidden', !langDropdownOpen);
+}
+function closeLangDropdown() {
+  langDropdownOpen = false;
+  document.getElementById('lang-dropdown-btn').classList.remove('open');
+  document.getElementById('lang-dropdown-panel').classList.add('hidden');
+}
+
+function toggleLang(code) {
+  if (selectedLangs.has(code)) {
+    if (selectedLangs.size <= 1) return;
+    selectedLangs.delete(code);
+  } else {
+    selectedLangs.add(code);
+  }
+  const item = document.getElementById('ldi-' + code);
+  if (item) item.classList.toggle('selected', selectedLangs.has(code));
+  updateLangLabel();
+  renderLangChips();
+}
+
+function removeLang(code) {
+  if (selectedLangs.size <= 1) return;
+  selectedLangs.delete(code);
+  const item = document.getElementById('ldi-' + code);
+  if (item) item.classList.remove('selected');
+  updateLangLabel();
+  renderLangChips();
+}
+
+function onLangSearch(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('#lang-dropdown-list .dropdown-item').forEach(el => {
+    el.style.display = el.dataset.name.includes(q) ? '' : 'none';
+  });
+}
+
+// ===== TAGLINE MODE (per template) =====
+function getTplMode(code) {
+  return tplTaglineModes[code] || 'ai';
+}
+
+function setTplTaglineMode(mode) {
+  if (activeIdx < 0) return;
+  const tpl = templates[activeIdx];
+  tplTaglineModes[tpl.code] = mode;
+  document.getElementById('tbtn-ai').classList.toggle('active', mode === 'ai');
+  document.getElementById('tbtn-custom').classList.toggle('active', mode === 'custom');
+  renderCustomFields();
+  loadPreview(activeIdx);
+}
+
+// Per-template custom text storage: { tplCode: { key: value } }
+let customTextData = {};
+
+function renderCustomFields() {
+  const container = document.getElementById('custom-fields-container');
+  if (activeIdx < 0 || !templates[activeIdx]) {
+    container.innerHTML = '';
+    return;
+  }
+  const tpl = templates[activeIdx];
+  const mode = getTplMode(tpl.code);
+
+  if (mode !== 'custom') {
+    container.innerHTML = '<div style="font-size:12px;color:#3f3f46">AI will auto-generate text for this template.</div>';
+    return;
+  }
+
+  const fields = dynFieldConfig[tpl.code];
+  let textFields = [];
+  if (fields) {
+    textFields = fields.filter(f => f.type === 'text' || f.type === 'tagline');
+  }
+  if (textFields.length === 0) {
+    textFields = [{ key: 'tagline', label: 'Tagline', type: 'tagline' }];
+  }
+
+  if (!customTextData[tpl.code]) customTextData[tpl.code] = {};
+
+  container.innerHTML = textFields.map(f => {
+    const val = customTextData[tpl.code][f.key] || '';
+    const placeholder = f.type === 'tagline' ? 'Enter tagline (Enter to break lines)' : 'Enter text...';
+    return `<div class="sb-field">
+      <label>${esc(f.label || f.key)}</label>
+      <textarea class="sb-input sb-textarea" data-code="${tpl.code}" data-key="${f.key}"
+        placeholder="${placeholder}" oninput="onCustomFieldInput(this)" rows="2" style="min-height:44px">${esc(val)}</textarea>
+    </div>`;
+  }).join('');
+}
+
+function onCustomFieldInput(el) {
+  const code = el.dataset.code;
+  const key = el.dataset.key;
+  if (!customTextData[code]) customTextData[code] = {};
+  customTextData[code][key] = el.value;
+  // Only refresh this template's preview
+  const idx = templates.findIndex(t => t.code === code);
+  if (idx >= 0) loadPreview(idx);
+}
+
+function getCustomTextForTemplate(tplCode) {
+  return customTextData[tplCode] || {};
+}
+
+// ===== GLOBAL COLOR =====
+function onGlobalChange() {
+  document.getElementById('g-accent-start-hex').value = document.getElementById('g-accent-start').value;
+  document.getElementById('g-accent-end-hex').value = document.getElementById('g-accent-end').value;
+  refreshAllPreviews();
+}
+function syncHex(pickerId, val) {
+  if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+    document.getElementById(pickerId).value = val;
+    refreshAllPreviews();
+  }
+}
+
+// ===== RENDER GRID =====
+function renderGrid() {
+  const area = document.getElementById('main-area');
+  if (!templates.length) {
+    area.innerHTML = `<div class="empty-state"><h2>No templates selected</h2><p>Go back and select templates to edit</p></div>`;
+    return;
+  }
+
+  area.innerHTML = `<div class="tpl-grid" id="tpl-grid"></div>`;
+  const grid = document.getElementById('tpl-grid');
+
+  templates.forEach((tpl, idx) => {
+    const item = document.createElement('div');
+    item.className = 'tpl-item';
+    item.id = 'titem-' + idx;
+    item.onclick = () => selectTemplate(idx);
+    const prevId = 'tprev-' + idx;
+    item.innerHTML = `
+      <div class="tpl-item-preview" id="${prevId}"></div>
+      <div class="tpl-item-footer">
+        <div>
+          <div class="tpl-item-name">${esc(tpl.name)}</div>
+          <div class="tpl-item-feature">${esc(tpl.featureName)}</div>
+        </div>
+      </div>
+    `;
+    grid.appendChild(item);
+
+    requestAnimationFrame(() => loadPreview(idx));
+  });
+}
+
+function loadPreview(idx) {
+  const tpl = templates[idx];
+  const box = document.getElementById('tprev-' + idx);
+  if (!box) return;
+  // Remove old iframe
+  const old = box.querySelector('iframe');
+  if (old) old.remove();
+
+  const boxW = box.clientWidth || 280;
+  const scale = boxW / 1080;
+
+  const as = document.getElementById('g-accent-start').value;
+  const ae = document.getElementById('g-accent-end').value;
+  let extraParams = '';
+  const tplMode = getTplMode(tpl.code);
+  if (tplMode === 'custom') {
+    const vals = getCustomTextForTemplate(tpl.code);
+    Object.entries(vals).forEach(([k, v]) => {
+      if (v) extraParams += `&${k}=${enc(v)}`;
+    });
+    const tagline = vals.tagline || vals.text_1 || '';
+    if (tagline) extraParams += `&title=${enc(tagline)}`;
+  } else {
+    const demoByFeature = {
+      'Make Up': 'Change Your\nMakeup',
+      '2 Image to Image': 'See Your\nFuture Baby',
+      'Mockup': 'Multiple\nAI Styles',
+      'Text and Image to Video': 'Create Your\nStunning Portrait',
+      'Restyle': 'See You In\nNew Style',
+      'AI Multi Style': 'Multiple\nAI Styles',
+      'Change Hair Style': 'Change Your\nHair Style',
+      'Text to Image': 'Turn Words Into\nBeautiful Art',
+    };
+    const demoTitle = demoByFeature[tpl.featureName] || 'Your Look Today';
+    extraParams = `&title=${enc(demoTitle)}`;
+  }
+  const url = `/preview/${tpl.code}?accent_start=${enc(as)}&accent_end=${enc(ae)}&font=${enc(selectedFont)}${extraParams}`;
+
+  const iframe = document.createElement('iframe');
+  iframe.style.width = '1080px';
+  iframe.style.height = '1920px';
+  iframe.style.transform = `scale(${scale})`;
+  // no sandbox — needed for font hover injection
+  iframe.src = url;
+  box.appendChild(iframe);
+}
+
+function refreshAllPreviews() {
+  templates.forEach((_, idx) => loadPreview(idx));
+}
+
+// ===== SELECT TEMPLATE FOR TEXT EDIT =====
+function selectTemplate(idx) {
+  // Toggle
+  if (activeIdx === idx) {
+    activeIdx = -1;
+    document.getElementById('tpl-text-section').style.display = 'none';
+    document.querySelectorAll('.tpl-item').forEach(el => el.classList.remove('active'));
+    return;
+  }
+
+  activeIdx = idx;
+  const tpl = templates[idx];
+
+  // Highlight
+  document.querySelectorAll('.tpl-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('titem-' + idx).classList.add('active');
+
+  // Show per-template text section
+  const section = document.getElementById('tpl-text-section');
+  section.style.display = 'block';
+  document.getElementById('tpl-text-label').textContent = tpl.name + ' — Text';
+
+  // Set toggle to match this template's mode
+  const mode = getTplMode(tpl.code);
+  document.getElementById('tbtn-ai').classList.toggle('active', mode === 'ai');
+  document.getElementById('tbtn-custom').classList.toggle('active', mode === 'custom');
+
+  renderCustomFields();
+}
+
+// ===== GENERATE =====
+// results: { langCode: { langName, files: [{url, filename, tplName}] } }
+let genResults = {};
+
+async function generateAll() {
+  const btn = document.getElementById('btn-generate');
+  btn.disabled = true;
+  btn.innerHTML = `<svg class="spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg> Generating...`;
+
+  const langs = [...selectedLangs].map(code => {
+    const l = LANGUAGES.find(x => x.code === code);
+    return { code, name: l?.name || code, country: l?.name || code };
+  });
+
+  genResults = {};
+  langs.forEach(l => { genResults[l.code] = { langName: l.name, flag: LANGUAGES.find(x=>x.code===l.code)?.flag||'', files: [] }; });
+
+  // Show results area
+  showResultsUI(langs);
+
+  let done = 0;
+  const total = templates.length * langs.length;
+
+  for (const tpl of templates) {
+    try {
+      const values = {
+        accent_start: document.getElementById('g-accent-start').value,
+        accent_end: document.getElementById('g-accent-end').value,
+        font: selectedFont,
+        tagline_mode: getTplMode(tpl.code),
+        custom_text: getTplMode(tpl.code) === 'custom' ? getCustomTextForTemplate(tpl.code) : {},
+      };
+      const res = await fetch('/api/gen-batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ languages: langs, values, templateCode: tpl.code, featureName: tpl.featureName || '' })
+      });
+      const data = await res.json();
+      await pollBatchUntilDone(data.batchId, tpl.name);
+    } catch (e) {
+      console.error('Generate error:', e);
+    }
+    done += langs.length;
+    const pct = Math.round((done / total) * 100);
+    document.getElementById('gen-progress-fill').style.width = pct + '%';
+    document.getElementById('gen-progress-text').textContent = `${done} / ${total}`;
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Generate All`;
+  document.getElementById('gen-progress-fill').style.width = '100%';
+  document.getElementById('gen-progress-text').textContent = 'Complete!';
+  document.getElementById('btn-download-all').style.display = '';
+}
+
+function pollBatchUntilDone(batchId, tplName) {
+  return new Promise((resolve) => {
+    const timer = setInterval(async () => {
+      try {
+        const res = await fetch('/api/batch/' + batchId);
+        const batch = await res.json();
+
+        batch.jobs.forEach(job => {
+          if (job.status === 'completed' && job.url) {
+            const r = genResults[job.code];
+            if (r && !r.files.some(f => f.url === job.url)) {
+              const filename = job.url.split('/').pop();
+              r.files.push({ url: job.url, filename, tplName });
+              updateResultRow(job.code);
+            }
+          }
+        });
+
+        if (batch.status === 'completed') { clearInterval(timer); resolve(); }
+      } catch { clearInterval(timer); resolve(); }
+    }, 2000);
+  });
+}
+
+function showResultsUI(langs) {
+  const area = document.getElementById('main-area');
+  area.innerHTML = `
+    <div style="margin-bottom:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:16px;font-weight:700">Generating Screenshots</div>
+        <button class="btn-tb btn-gen" id="btn-download-all" style="display:none" onclick="downloadAll()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download All
+        </button>
+      </div>
+      <div style="height:6px;background:#18181b;border-radius:3px;overflow:hidden">
+        <div id="gen-progress-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#F06060,#f9a3a3);border-radius:3px;transition:width .3s ease"></div>
+      </div>
+      <div id="gen-progress-text" style="font-size:12px;color:#52525b;margin-top:6px">0 / 0</div>
+    </div>
+    <div id="gen-results-list" style="display:flex;flex-direction:column;gap:16px">
+      ${langs.map(l => `
+        <div class="gen-row" id="gen-row-${l.code}">
+          <div class="gen-row-header">
+            <span class="gen-row-flag">${LANGUAGES.find(x=>x.code===l.code)?.flag||''}</span>
+            <span class="gen-row-lang">${esc(l.name)}</span>
+            <span class="gen-row-lang-code">${l.code.toUpperCase()}</span>
+            <span class="gen-row-count" id="gen-count-${l.code}">0 files</span>
+            <div style="flex:1"></div>
+            <button class="gen-row-dl" id="gen-dl-${l.code}" onclick="downloadRow('${l.code}')" disabled>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download ZIP
+            </button>
+          </div>
+          <div class="gen-row-thumbs" id="gen-thumbs-${l.code}">
+            <div class="gen-row-empty">Generating...</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function updateResultRow(langCode) {
+  const r = genResults[langCode];
+  if (!r) return;
+
+  document.getElementById('gen-count-' + langCode).textContent = r.files.length + ' file' + (r.files.length !== 1 ? 's' : '');
+
+  const thumbs = document.getElementById('gen-thumbs-' + langCode);
+  thumbs.innerHTML = r.files.map(f => `
+    <a class="gen-thumb" href="${f.url}" target="_blank" title="${esc(f.tplName)}">
+      <img src="${f.url}" loading="lazy">
+    </a>
+  `).join('');
+
+  const dlBtn = document.getElementById('gen-dl-' + langCode);
+  if (dlBtn && r.files.length > 0) dlBtn.disabled = false;
+}
+
+function downloadZip(files, zipName, folders) {
+  // Use hidden iframe to bypass IDM interception
+  const iframe = document.getElementById('dl-iframe') || (() => {
+    const f = document.createElement('iframe');
+    f.id = 'dl-iframe';
+    f.name = 'dl-iframe';
+    f.style.display = 'none';
+    document.body.appendChild(f);
+    return f;
+  })();
+
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = '/api/zip-download';
+  form.target = 'dl-iframe';
+  form.style.display = 'none';
+
+  const fInput = document.createElement('input');
+  fInput.name = 'files';
+  fInput.value = JSON.stringify(files);
+  form.appendChild(fInput);
+
+  const nInput = document.createElement('input');
+  nInput.name = 'zipName';
+  nInput.value = zipName;
+  form.appendChild(nInput);
+
+  if (folders) {
+    const folderInput = document.createElement('input');
+    folderInput.name = 'folders';
+    folderInput.value = JSON.stringify(folders);
+    form.appendChild(folderInput);
+  }
+
+  document.body.appendChild(form);
+  form.submit();
+  document.body.removeChild(form);
+}
+
+function downloadRow(langCode) {
+  const r = genResults[langCode];
+  if (!r || !r.files.length) return;
+  downloadZip(r.files.map(f => f.filename), `screenshots_${langCode}.zip`);
+}
+
+function downloadAll() {
+  const allFiles = [];
+  const folders = {};
+  Object.entries(genResults).forEach(([langCode, r]) => {
+    r.files.forEach(f => {
+      allFiles.push(f.filename);
+      folders[f.filename] = langCode;
+    });
+  });
+  if (!allFiles.length) return;
+  downloadZip(allFiles, 'screenshots_all.zip', folders);
+}
+
+// ===== UTILS =====
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+function enc(s) { return encodeURIComponent(s || ''); }
+
+// ===== START =====
+init();
+</script>
+</body>
+</html>
