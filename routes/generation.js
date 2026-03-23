@@ -15,6 +15,16 @@ const router = Router();
 // In-memory batch store
 const batches = {};
 
+// GET /api/test-imagen — debug endpoint
+router.get('/test-imagen', async (req, res) => {
+  try {
+    const result = await generateImage('a beautiful landscape with mountains and blue sky', '9:16');
+    res.json({ ok: true, url: `/api/cache/${basename(result.path)}` });
+  } catch (err) {
+    res.json({ ok: false, error: err.message });
+  }
+});
+
 // POST /api/gen-image
 router.post('/gen-image', async (req, res) => {
   const { prompt, aspectRatio } = req.body;
