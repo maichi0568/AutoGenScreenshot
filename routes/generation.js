@@ -26,6 +26,11 @@ router.get('/test-imagen', async (req, res) => {
   }
 });
 
+// GET /api/debug-env
+router.get('/debug-env', (req, res) => {
+  res.json({ PORT: process.env.PORT, NODE_ENV: process.env.NODE_ENV });
+});
+
 // GET /api/test-batch-prompt — test with exact batch logic
 router.get('/test-batch-prompt', async (req, res) => {
   const tpl = req.query.tpl || 'template6';
