@@ -4,13 +4,15 @@ import { existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { v4 as uuid } from 'uuid';
+import multer from 'multer';
 import { createJob, getJob, getAllJobs } from '../src/jobManager.js';
 import { runPipeline } from '../src/pipeline.js';
-import { generateImage, editImage } from '../src/assetGenerator.js';
+import { generateImage, editImage, generateFromReference } from '../src/assetGenerator.js';
 import { processBatchLanguage } from '../src/batchPipeline.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const router = Router();
+const upload = multer({ dest: 'uploads/' });
 
 // In-memory batch store
 const batches = {};
@@ -103,6 +105,40 @@ router.post('/gen-variation', async (req, res) => {
   }
 });
 
+// POST /api/gen-from-ref-image — upload a reference image, analyze & generate new assets
+router.post('/gen-from-ref-image', upload.single('ref_image'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No reference image uploaded' });
+
+  const aspectRatio = req.body.aspectRatio || '9:16';
+  const extraPrompt = req.body.extraPrompt || '';
+
+  try {
+    const refPath = req.file.path;
+    const result = await generateFromReference(refPath, aspectRatio, extraPrompt);
+    res.json({
+      tagline: result.tagline,
+      original_tagline: result.analysis.tagline,
+      background_color: result.background_color,
+      layout: result.analysis.layout_description,
+      images: result.images.map(img => ({
+        id: img.id,
+        position: img.position,
+        url: `/api/cache/${basename(img.path)}`,
+      })),
+    });
+  } catch (err) {
+    console.error('gen-from-ref-image error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/upload-asset — upload an image for use in batch generation
+router.post('/upload-asset', upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  const filePath = req.file.path.replace(/\\/g, '/');
+  res.json({ path: filePath, url: `/${filePath}` });
+});
+
 // POST /api/gen-batch
 router.post('/gen-batch', (req, res) => {
   const { languages, values, templateCode = 'tmpl1', featureName = '' } = req.body;
@@ -125,6 +161,7 @@ router.post('/gen-batch', (req, res) => {
         const result = await processBatchLanguage(job, values, templateCode, featureName);
         job.status = 'completed';
         job.url = result.url;
+        job._intermediateAssets = result._intermediateAssets;
       } catch (err) {
         job.status = 'failed';
         job.error = err.message;
@@ -142,6 +179,72 @@ router.get('/batch/:id', (req, res) => {
   const batch = batches[req.params.id];
   if (!batch) return res.status(404).json({ error: 'Batch not found' });
   res.json(batch);
+});
+
+// GET /api/batch/:id/assets/:langCode — get intermediate assets for retry
+router.get('/batch/:id/assets/:langCode', (req, res) => {
+  const batch = batches[req.params.id];
+  if (!batch) return res.status(404).json({ error: 'Batch not found' });
+  const job = batch.jobs.find(j => j.code === req.params.langCode);
+  if (!job) return res.status(404).json({ error: 'Job not found' });
+  if (!job._intermediateAssets) return res.status(404).json({ error: 'No intermediate assets' });
+  res.json({
+    tagline: job._intermediateAssets.tagline,
+    imageSlots: Object.keys(job._intermediateAssets.images || {}),
+  });
+});
+
+// POST /api/gen-retry — retry specific parts of a completed batch job
+router.post('/gen-retry', (req, res) => {
+  const { batchId, langCode, retryParts, values, templateCode, featureName } = req.body;
+  if (!batchId || !langCode || !retryParts?.length) {
+    return res.status(400).json({ error: 'batchId, langCode, retryParts required' });
+  }
+
+  const origBatch = batches[batchId];
+  if (!origBatch) return res.status(404).json({ error: 'Original batch not found' });
+  const origJob = origBatch.jobs.find(j => j.code === langCode);
+  if (!origJob) return res.status(404).json({ error: 'Original job not found' });
+
+  const previousAssets = origJob._intermediateAssets || null;
+  const tplCode = templateCode || origBatch.templateCode;
+
+  // Create a new single-job batch for the retry
+  const retryBatchId = uuid();
+  const lang = { code: origJob.code, name: origJob.name, country: origJob.country || origJob.name };
+  const retryBatch = {
+    id: retryBatchId,
+    status: 'processing',
+    templateCode: tplCode,
+    isRetry: true,
+    jobs: [{ ...lang, status: 'pending', url: null, error: null }]
+  };
+  batches[retryBatchId] = retryBatch;
+
+  (async () => {
+    const job = retryBatch.jobs[0];
+    job.status = 'processing';
+    try {
+      const result = await processBatchLanguage(job, values, tplCode, featureName || '', {
+        retryParts,
+        previousAssets,
+      });
+      job.status = 'completed';
+      job.url = result.url;
+      job._intermediateAssets = result._intermediateAssets;
+
+      // Update original batch job too so next retry uses latest assets
+      origJob.url = result.url;
+      origJob._intermediateAssets = result._intermediateAssets;
+    } catch (err) {
+      job.status = 'failed';
+      job.error = err.message;
+      console.error(`Retry ${retryBatchId} [${job.code}] failed:`, err.message);
+    }
+    retryBatch.status = 'completed';
+  })().catch(console.error);
+
+  res.json({ batchId: retryBatchId });
 });
 
 // POST /api/generate

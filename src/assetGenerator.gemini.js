@@ -1,4 +1,5 @@
-// ESM module — GEMINI API VERSION
+// ESM module — GEMINI API VERSION (backup)
+// To use: rename this file to assetGenerator.js and set GEMINI_API_KEY in .env
 import { GoogleGenAI } from '@google/genai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getFromCache, saveToCache } from './cache.js';
@@ -100,96 +101,6 @@ export async function editImage(imagePath, modification, aspectRatio = '9:16') {
   });
 
   return { type: 'file', path: cached_path };
-}
-
-// Analyze a template screenshot and extract its components as structured JSON
-export async function analyzeTemplateImage(imagePath) {
-  const { readFileSync } = await import('fs');
-  const sharp = (await import('sharp')).default;
-
-  let imageBuffer;
-  try {
-    imageBuffer = await sharp(imagePath)
-      .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
-      .jpeg({ quality: 80 })
-      .toBuffer();
-  } catch {
-    imageBuffer = readFileSync(imagePath);
-  }
-  const base64 = imageBuffer.toString('base64');
-
-  const prompt = `You are analyzing an app store screenshot template. This image contains a designed layout with text and photos composed together.
-
-Extract the components and return ONLY valid JSON (no markdown, no code block, no explanation):
-{
-  "tagline": "the main text/tagline visible in the image, keep original language",
-  "images": [
-    {
-      "id": "image_1",
-      "description": "detailed description of this photo for an AI image generator to create a similar one. Describe the person/subject, pose, expression, clothing, background, lighting, style. Be very specific.",
-      "position": "where in the layout (e.g. center, left, right, top-left, bottom)",
-      "aspect_ratio": "estimated ratio like 9:16, 3:4, 1:1"
-    }
-  ],
-  "background_color": "dominant background color as hex, e.g. #1a1a2e",
-  "layout_description": "brief description of the overall layout structure",
-  "num_images": 1
-}
-
-Rules:
-- List ALL distinct photos/images in the template (not icons or UI elements)
-- For each image, write a detailed generation prompt as the description
-- If there are before/after images, describe each separately
-- tagline should be the main headline text only
-- num_images = total count of photos`;
-
-  return retryWithBackoff(async () => {
-    console.log('[vision] analyzing template image...');
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-    const result = await model.generateContent([
-      {
-        inlineData: {
-          mimeType: 'image/jpeg',
-          data: base64,
-        },
-      },
-      prompt,
-    ]);
-    let text = result.response.text().trim();
-    // Strip markdown code block if present
-    text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-    console.log(`[vision] extracted: ${text.slice(0, 300)}`);
-    return JSON.parse(text);
-  });
-}
-
-// Generate new assets from a reference template image
-export async function generateFromReference(refImagePath, aspectRatio = '9:16', extraPrompt = '') {
-  const analysis = await analyzeTemplateImage(refImagePath);
-  console.log(`[ref-gen] found ${analysis.num_images} image(s), tagline: "${analysis.tagline}"`);
-
-  // Generate new tagline
-  const taglinePrompt = `Rewrite this app store screenshot tagline in a fresh new way, same language, same meaning but different wording. Max 2 lines, max 22 chars per line. Original: "${analysis.tagline}"${extraPrompt ? '. Context: ' + extraPrompt : ''}. Return ONLY the new tagline text.`;
-  const newTagline = await generateText(taglinePrompt);
-
-  // Generate new images in parallel
-  const imageResults = await Promise.all(
-    analysis.images.map(async (img) => {
-      const prompt = extraPrompt
-        ? `${extraPrompt}. ${img.description}`
-        : img.description;
-      const ratio = img.aspect_ratio || aspectRatio;
-      const result = await generateImage(prompt, ratio);
-      return { id: img.id, position: img.position, ...result };
-    })
-  );
-
-  return {
-    analysis,
-    tagline: newTagline,
-    images: imageResults,
-    background_color: analysis.background_color,
-  };
 }
 
 export function generateSolidColor(hexColor) {

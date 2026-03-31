@@ -95,20 +95,76 @@ body{background:#09090b;color:#f1f5f9;font-family:'Inter',system-ui,sans-serif;m
 /* ===== EMPTY ===== */
 .empty{text-align:center;padding:48px 20px;color:#3f3f46;font-size:14px}
 
+/* ===== GENERATE FROM IMAGE ===== */
+.ref-gen-section{margin-bottom:28px}
+.ref-gen-card{background:#111113;border:1.5px dashed #27272a;border-radius:14px;padding:28px;transition:all .25s;cursor:pointer}
+.ref-gen-card:hover{border-color:rgba(240,96,96,.4)}
+.ref-gen-card.has-file{border-style:solid;border-color:rgba(240,96,96,.3);cursor:default}
+.ref-gen-header{display:flex;align-items:center;gap:14px}
+.ref-gen-icon{width:44px;height:44px;border-radius:12px;background:rgba(240,96,96,.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.ref-gen-title{font-size:15px;font-weight:700;color:#f1f5f9}
+.ref-gen-desc{font-size:12px;color:#52525b;margin-top:2px}
+.ref-gen-body{margin-top:20px;display:none}
+.ref-gen-card.has-file .ref-gen-body{display:block}
+.ref-gen-preview-row{display:flex;gap:16px;align-items:flex-start}
+.ref-gen-thumb{width:120px;height:213px;border-radius:10px;overflow:hidden;background:#000;flex-shrink:0;position:relative}
+.ref-gen-thumb img{width:100%;height:100%;object-fit:cover}
+.ref-gen-thumb .remove-btn{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.2);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;line-height:1}
+.ref-gen-thumb .remove-btn:hover{background:#F06060}
+.ref-gen-controls{flex:1;display:flex;flex-direction:column;gap:12px}
+.ref-gen-controls input,.ref-gen-controls select{padding:10px 14px;background:#0c0c10;border:1px solid #27272a;border-radius:8px;color:#f1f5f9;font-size:13px;font-family:inherit;outline:none;transition:border-color .2s}
+.ref-gen-controls input:focus,.ref-gen-controls select:focus{border-color:rgba(240,96,96,.5)}
+.ref-gen-controls input::placeholder{color:#3f3f46}
+.ref-gen-controls label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#52525b}
+.btn-generate{padding:12px 28px;background:linear-gradient(135deg,#F06060,#c44040);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 4px 16px rgba(240,96,96,.25)}
+.btn-generate:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(240,96,96,.35)}
+.btn-generate:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.ref-gen-result{margin-top:16px;display:none}
+.ref-gen-result.show{display:block}
+.ref-gen-result-row{display:flex;gap:16px;align-items:flex-start}
+.ref-gen-result-img{width:180px;border-radius:10px;overflow:hidden;background:#000}
+.ref-gen-result-img img{width:100%;display:block}
+.ref-gen-result-actions{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.btn-download{padding:8px 20px;background:#18181b;border:1px solid #27272a;border-radius:8px;color:#a1a1aa;font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;text-align:center;transition:all .15s}
+.btn-download:hover{border-color:#3f3f46;color:#f1f5f9}
+.ref-gen-spinner{display:inline-flex;align-items:center;gap:8px;color:#a1a1aa;font-size:13px}
+.ref-gen-spinner .dot{width:6px;height:6px;border-radius:50%;background:#F06060;animation:pulse 1s infinite}
+.ref-gen-spinner .dot:nth-child(2){animation-delay:.2s}
+.ref-gen-spinner .dot:nth-child(3){animation-delay:.4s}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
+
 /* ===== RESPONSIVE ===== */
 @media(max-width:640px){
   .header,.search-wrap,.content{padding-left:20px;padding-right:20px}
   .group-chips{gap:8px}
   .tpl-row{padding-left:36px}
+  .ref-gen-preview-row{flex-direction:column}
+  .ref-gen-thumb{width:100%;height:200px}
 }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="logo">ScreenshotAI</div>
-  <div class="logo-sub">App Store Screenshot Generator</div>
+<div class="header" style="display:flex;align-items:center;gap:16px">
+  <div style="flex:1">
+    <div class="logo">ScreenshotAI</div>
+    <div class="logo-sub">App Store Screenshot Generator</div>
+  </div>
+  <a href="/admin.html" id="admin-link" class="header-btn" style="display:none">Admin</a>
+  <div id="user-info" class="user-info" style="display:none">
+    <img id="user-avatar" class="user-avatar" src="" alt="">
+    <span id="user-name"></span>
+  </div>
+  <button onclick="doLogout()" class="header-btn header-btn-logout">Logout</button>
 </div>
+<style>
+.header-btn{padding:7px 16px;border-radius:8px;border:1px solid #27272a;background:transparent;color:#a1a1aa;font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;font-family:inherit;transition:all .15s}
+.header-btn:hover{border-color:#3f3f46;color:#f1f5f9}
+.header-btn-logout{border-color:rgba(248,113,113,.3);color:#f87171}
+.header-btn-logout:hover{background:rgba(248,113,113,.1);border-color:#f87171}
+.user-info{display:flex;align-items:center;gap:8px;padding:4px 12px 4px 4px;border:1px solid #27272a;border-radius:20px;font-size:12px;font-weight:500;color:#a1a1aa}
+.user-avatar{width:28px;height:28px;border-radius:50%;object-fit:cover}
+</style>
 
 <div class="search-wrap">
   <div class="search-box">
@@ -118,6 +174,62 @@ body{background:#09090b;color:#f1f5f9;font-family:'Inter',system-ui,sans-serif;m
 </div>
 
 <div class="content">
+  <!-- Generate from Reference Image -->
+  <div class="ref-gen-section">
+    <input type="file" id="ref-file-input" accept="image/*" style="display:none" onchange="onRefFileSelected(this)">
+    <div class="ref-gen-card" id="ref-gen-card" onclick="triggerRefUpload(event)">
+      <div class="ref-gen-header">
+        <div class="ref-gen-icon">🖼</div>
+        <div>
+          <div class="ref-gen-title">Generate from Reference Image</div>
+          <div class="ref-gen-desc">Upload a screenshot/template and AI will generate a new version with the same style</div>
+        </div>
+      </div>
+      <div class="ref-gen-body">
+        <div class="ref-gen-preview-row">
+          <div class="ref-gen-thumb">
+            <img id="ref-thumb-img" src="">
+            <div class="remove-btn" onclick="clearRefImage(event)">&times;</div>
+          </div>
+          <div class="ref-gen-controls">
+            <div>
+              <label>Extra prompt (optional)</label>
+              <input type="text" id="ref-extra-prompt" placeholder="e.g. change model to Asian girl, blue background...">
+            </div>
+            <div>
+              <label>Aspect Ratio</label>
+              <select id="ref-aspect-ratio">
+                <option value="9:16" selected>9:16 (Portrait)</option>
+                <option value="16:9">16:9 (Landscape)</option>
+                <option value="1:1">1:1 (Square)</option>
+                <option value="3:4">3:4</option>
+                <option value="4:3">4:3</option>
+              </select>
+            </div>
+            <button class="btn-generate" id="btn-ref-gen" onclick="doRefGenerate(event)">Generate New Image</button>
+            <div id="ref-gen-status"></div>
+          </div>
+        </div>
+        <div class="ref-gen-result" id="ref-gen-result">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#52525b;margin-bottom:10px">Generated Assets</div>
+          <!-- Tagline -->
+          <div id="ref-result-tagline-wrap" style="margin-bottom:16px">
+            <div style="font-size:11px;color:#52525b;margin-bottom:4px">TAGLINE</div>
+            <div id="ref-result-tagline" style="font-size:18px;font-weight:700;color:#f1f5f9;padding:12px 16px;background:#18181b;border:1px solid #27272a;border-radius:10px;white-space:pre-line"></div>
+            <div id="ref-result-tagline-orig" style="font-size:11px;color:#3f3f46;margin-top:4px"></div>
+          </div>
+          <!-- Images -->
+          <div style="font-size:11px;color:#52525b;margin-bottom:8px">IMAGES</div>
+          <div id="ref-result-images" style="display:flex;gap:12px;flex-wrap:wrap"></div>
+          <!-- Actions -->
+          <div style="margin-top:16px;display:flex;gap:8px">
+            <button class="btn-generate" onclick="doRefGenerate(event)" style="font-size:13px;padding:10px 24px">Regenerate All</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Groups -->
   <div class="section-label">Categories</div>
   <div class="group-chips" id="group-chips"></div>
@@ -376,12 +488,33 @@ function renderTemplatesForFeature(fid) {
       if (!box) return;
       const boxW = box.clientWidth || 140;
       const scale = boxW / 1080;
+      const demoTitles = {
+        'Make Up': 'Change Your\nMakeup',
+        '2 Image to Image': 'See Your\nFuture Baby',
+        'Mockup': 'Bring Photos\nTogether Naturally',
+        'Text and Image to Video': 'Create Your\nStunning Portrait',
+        'Restyle': 'See You In\nNew Style',
+        'AI Multi Style': 'Multiple\nAI Styles',
+        'Change Hair Style': 'Change Your\nHair Style',
+        'Text to Image': 'Turn Words Into\nBeautiful Art',
+        'Caller Lookup': 'Know Who\nIs Calling',
+        'Spam Blocker': 'Block Spam\nCalls',
+        'Call Recording': 'Record Every\nImportant Call',
+        'VPN': 'Browse Safe\nAnd Private',
+        'Phone Cleaner': 'Clean Your\nPhone Fast',
+        'Face Swap': 'Swap Faces\nFor Fun',
+        'Age Transform': 'See Your\nFuture Self',
+        'Photo Enhance': 'Enhance Your\nPhotos',
+        'AI Avatar': 'Create Your\nAI Avatar',
+        'Background Remove': 'Remove Any\nBackground',
+      };
+      const demoTitle = demoTitles[feature.name] || 'Your Look\nToday';
       const iframe = document.createElement('iframe');
       iframe.style.width = '1080px';
       iframe.style.height = '1920px';
       iframe.style.transform = `scale(${scale})`;
       iframe.sandbox = 'allow-same-origin allow-scripts';
-      iframe.src = `/preview/${tpl.code}`;
+      iframe.src = `/preview/${tpl.code}?title=${encodeURIComponent(demoTitle)}`;
       box.appendChild(iframe);
     });
   });
@@ -484,8 +617,111 @@ function esc(s) {
   return d.innerHTML;
 }
 
+// ===== AUTH =====
+async function loadUser() {
+  try {
+    const res = await fetch('/api/auth/me');
+    if (!res.ok) return;
+    const data = await res.json();
+    const infoEl = document.getElementById('user-info');
+    infoEl.style.display = 'flex';
+    document.getElementById('user-name').textContent = data.user + (data.role === 'admin' ? ' (Admin)' : '');
+    if (data.picture) document.getElementById('user-avatar').src = data.picture;
+    else document.getElementById('user-avatar').style.display = 'none';
+    if (data.role === 'admin') {
+      document.getElementById('admin-link').style.display = '';
+    }
+  } catch {}
+}
+
+async function doLogout() {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  window.location.href = '/login.html';
+}
+
+// ===== GENERATE FROM REFERENCE =====
+let refFile = null;
+
+function triggerRefUpload(e) {
+  // Don't trigger if clicking inside body (controls area)
+  if (document.getElementById('ref-gen-card').classList.contains('has-file')) return;
+  document.getElementById('ref-file-input').click();
+}
+
+function onRefFileSelected(input) {
+  if (!input.files[0]) return;
+  refFile = input.files[0];
+  const card = document.getElementById('ref-gen-card');
+  card.classList.add('has-file');
+  const reader = new FileReader();
+  reader.onload = e => { document.getElementById('ref-thumb-img').src = e.target.result; };
+  reader.readAsDataURL(refFile);
+  // Reset result
+  document.getElementById('ref-gen-result').classList.remove('show');
+}
+
+function clearRefImage(e) {
+  e.stopPropagation();
+  refFile = null;
+  document.getElementById('ref-gen-card').classList.remove('has-file');
+  document.getElementById('ref-file-input').value = '';
+  document.getElementById('ref-thumb-img').src = '';
+  document.getElementById('ref-gen-result').classList.remove('show');
+  document.getElementById('ref-gen-status').innerHTML = '';
+}
+
+async function doRefGenerate(e) {
+  e.stopPropagation();
+  if (!refFile) return;
+
+  const btn = document.getElementById('btn-ref-gen');
+  const status = document.getElementById('ref-gen-status');
+  const resultDiv = document.getElementById('ref-gen-result');
+
+  btn.disabled = true;
+  status.innerHTML = '<span class="ref-gen-spinner"><span class="dot"></span><span class="dot"></span><span class="dot"></span> Analyzing template & generating new assets...</span>';
+  resultDiv.classList.remove('show');
+
+  try {
+    const fd = new FormData();
+    fd.append('ref_image', refFile);
+    fd.append('aspectRatio', document.getElementById('ref-aspect-ratio').value);
+    fd.append('extraPrompt', document.getElementById('ref-extra-prompt').value);
+
+    const res = await fetch('/api/gen-from-ref-image', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    // Show tagline
+    document.getElementById('ref-result-tagline').textContent = data.tagline;
+    document.getElementById('ref-result-tagline-orig').textContent = 'Original: ' + data.original_tagline;
+
+    // Show images
+    const imagesDiv = document.getElementById('ref-result-images');
+    imagesDiv.innerHTML = data.images.map((img, i) => `
+      <div style="flex-shrink:0">
+        <div style="width:140px;border-radius:10px;overflow:hidden;background:#000;border:1px solid #27272a">
+          <img src="${img.url}" style="width:100%;display:block">
+        </div>
+        <div style="margin-top:6px;display:flex;gap:4px;align-items:center">
+          <span style="font-size:10px;color:#52525b">${esc(img.id)} · ${esc(img.position)}</span>
+        </div>
+        <a href="${img.url}" download="${img.id}.png" class="btn-download" style="margin-top:4px;display:block;font-size:11px;padding:6px 12px">Download</a>
+      </div>
+    `).join('');
+
+    resultDiv.classList.add('show');
+    status.innerHTML = '';
+  } catch (err) {
+    status.innerHTML = `<span style="color:#f87171;font-size:13px">Error: ${esc(err.message)}</span>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 // ===== INIT =====
 async function init() {
+  loadUser();
   try {
     const res = await fetch('/api/data');
     const data = await res.json();

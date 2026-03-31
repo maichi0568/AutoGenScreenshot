@@ -36,7 +36,24 @@ export async function captureScreenshot(html, jobId, opts = {}) {
     // Wait for fonts and images with timeout (don't hang forever)
     await Promise.race([
       (async () => {
-        await page.evaluate(() => document.fonts.ready);
+        // Force-load all font weights with test strings covering many scripts
+        await page.evaluate(async () => {
+          const testChars = 'ABCabc àáảãạ ăắằẳẵặ âấầẩẫậ đ éèẻẽẹ êếềểễệ íìỉĩị óòỏõọ ôốồổỗộ ơớờởỡợ úùủũụ ưứừửữự ýỳỷỹỵ 你好世界 こんにちは 안녕하세요 สวัสดี مرحبا Привет';
+          const weights = ['400', '600', '700', '800'];
+          const families = new Set();
+          document.querySelectorAll('*').forEach(el => {
+            const ff = getComputedStyle(el).fontFamily;
+            ff.split(',').forEach(f => families.add(f.trim().replace(/['"]/g, '')));
+          });
+          const loads = [];
+          for (const family of families) {
+            for (const w of weights) {
+              loads.push(document.fonts.load(`${w} 48px "${family}"`, testChars).catch(() => {}));
+            }
+          }
+          await Promise.all(loads);
+          await document.fonts.ready;
+        });
         await page.evaluate(() =>
           Promise.all(
             [...document.images].map(img =>
@@ -45,11 +62,11 @@ export async function captureScreenshot(html, jobId, opts = {}) {
           )
         );
       })(),
-      new Promise(r => setTimeout(r, 15000)) // max 15s for fonts/images
+      new Promise(r => setTimeout(r, 20000)) // max 20s for fonts/images
     ]);
 
-    // Extra settle time
-    await new Promise(r => setTimeout(r, 1000));
+    // Extra settle time for font rendering
+    await new Promise(r => setTimeout(r, 1500));
 
     // Capture exactly the template canvas (not the whole browser viewport)
     const screenshot = await page.screenshot({

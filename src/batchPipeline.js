@@ -8,6 +8,35 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+// Map language/country name to ethnicity description for accurate image generation
+const ETHNICITY_MAP = {
+  English: 'Caucasian European',
+  Japanese: 'Japanese East Asian',
+  Vietnamese: 'Vietnamese Southeast Asian',
+  Korean: 'Korean East Asian',
+  Chinese: 'Chinese East Asian',
+  Thai: 'Thai Southeast Asian',
+  German: 'German European',
+  French: 'French European',
+  Spanish: 'Spanish European',
+  Portuguese: 'Brazilian Latin American',
+  Indonesian: 'Indonesian Southeast Asian',
+  Hindi: 'Indian South Asian',
+  Arabic: 'Middle Eastern Arab',
+  Turkish: 'Turkish Middle Eastern',
+  Russian: 'Russian Eastern European',
+  Italian: 'Italian Southern European',
+  Dutch: 'Dutch Northern European',
+  Polish: 'Polish Eastern European',
+  Malay: 'Malay Southeast Asian',
+  Swedish: 'Swedish Scandinavian',
+};
+
+function getEthnicityInstruction(country) {
+  const ethnicity = ETHNICITY_MAP[country] || country;
+  return `${ethnicity} person, `;
+}
+
 function loadPrompts() {
   const p = join(__dirname, '../config/prompts.json');
   return existsSync(p) ? JSON.parse(readFileSync(p, 'utf-8')) : {};
@@ -57,7 +86,42 @@ const COLOR_CSS = (start, end) => `<style>
 .swatch-center-container{border-color:${end}!important;}
 </style>`;
 
-export async function processBatchLanguage(lang, values, templateCode = 'tmpl1', featureName = '') {
+// Variation suffixes injected during retry to force different outputs
+const IMAGE_VARIATION_HINTS = [
+  'different angle and composition, ',
+  'alternative pose and framing, ',
+  'new creative perspective, ',
+  'fresh unique look, ',
+  'different lighting and mood, ',
+  'varied expression and style, ',
+  'alternative artistic direction, ',
+  'different background setting, ',
+];
+
+const TEXT_VARIATION_HINTS = [
+  ' Use completely different wording.',
+  ' Be more creative and unexpected.',
+  ' Try a fresh angle.',
+  ' Use a different tone.',
+  ' Make it catchy in a new way.',
+  ' Surprise me with something original.',
+];
+
+function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// Pick a prompt: if value is an array, pick random; if string, return it
+function pickPrompt(val) {
+  if (!val) return '';
+  if (Array.isArray(val)) return val.length > 0 ? pickRandom(val) : '';
+  return val;
+}
+
+export async function processBatchLanguage(lang, values, templateCode = 'tmpl1', featureName = '', retryOpts = {}) {
+  // retryOpts: { retryParts: ['tagline','img1',...] or ['all'], previousAssets: { tagline, images: { slotKey: result } } }
+  const retryParts = retryOpts.retryParts || null; // null = generate all (first run)
+  const prevAssets = retryOpts.previousAssets || null;
+  const retryAll = !retryParts || retryParts.includes('all');
+  const isRetry = retryParts !== null;
   let config = TEMPLATE_DEFS[templateCode];
 
   // If no hardcoded config, build from dynamic field config
@@ -75,13 +139,21 @@ export async function processBatchLanguage(lang, values, templateCode = 'tmpl1',
     };
   }
 
+  console.log(`[batch] uploaded_files:`, JSON.stringify(values.uploaded_files || {}));
   const { name, country } = lang;
 
   // 1. Tagline: AI generate or translate custom text
   const adminPrompts = loadPrompts()[templateCode] || {};
   let t1, t2;
 
-  if (values.tagline_mode === 'custom') {
+  const shouldRetryTagline = retryAll || (retryParts && retryParts.includes('tagline'));
+
+  if (!shouldRetryTagline && prevAssets?.tagline) {
+    // Reuse previous tagline
+    t1 = prevAssets.tagline;
+    t2 = '';
+    if (prevAssets.customFields) values._customFields = prevAssets.customFields;
+  } else if (values.tagline_mode === 'custom') {
     // Custom mode: use text exactly as user typed
     const ct = values.custom_text || {};
     // Parse custom text and translate to target language
@@ -106,7 +178,7 @@ export async function processBatchLanguage(lang, values, templateCode = 'tmpl1',
     }
   } else {
     // AI mode: generate tagline from admin prompt
-    const taglinePrompt = adminPrompts.tagline_prompt || '';
+    const taglinePrompt = pickPrompt(adminPrompts.tagline_prompt);
     let taglineGenPrompt;
     if (taglinePrompt) {
       taglineGenPrompt = taglinePrompt
@@ -120,6 +192,7 @@ export async function processBatchLanguage(lang, values, templateCode = 'tmpl1',
     } else {
       taglineGenPrompt = `App store screenshot tagline for "${featureName || 'app feature'}". Language: ${name}. 3-6 words, single line. Short and catchy. No quotes, no explanation. Return ONLY the tagline.`;
     }
+    if (isRetry && shouldRetryTagline) taglineGenPrompt += pickRandom(TEXT_VARIATION_HINTS);
     const taglineRaw = await generateText(taglineGenPrompt);
     // Single line tagline — CSS will handle wrapping at 1000px
     t1 = taglineRaw.replace(/["*\n]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -135,32 +208,162 @@ export async function processBatchLanguage(lang, values, templateCode = 'tmpl1',
     if (refVal && refVal !== 'none') refMap[slot.key] = refVal;
   });
 
+  // Helper: should this image slot be regenerated?
+  const shouldRetryImage = (slotKey) => retryAll || (retryParts && retryParts.includes(slotKey));
+
+  // Helper: add variation to prompt when retrying to ensure different output
+  const varyPrompt = (prompt, slotKey) => {
+    if (isRetry && shouldRetryImage(slotKey)) {
+      return pickRandom(IMAGE_VARIATION_HINTS) + prompt;
+    }
+    return prompt;
+  };
+
   // Separate: slots without refs first, then slots with refs
   const noRefSlots = config.images.filter(s => !refMap[s.key]);
   const refSlots = config.images.filter(s => refMap[s.key]);
 
-  // Generate non-ref images first (in parallel)
+  // Future baby templates: generate baby first, then describe its features for parent prompts
+  const isFutureBaby = templateCode === '2i2i' || templateCode === '2i2i1';
+  let babyFaceDesc = '';
+
+  // Generate non-ref images first (in parallel, or sequentially for future baby)
   const imageResultMap = {};
-  const noRefResults = await Promise.all(
-    noRefSlots.map(async slot => {
-      const basePrompt = adminPrompts[slot.promptKey] || values[slot.promptKey] || 'portrait photo, professional photography';
-      const prompt = `${country} ${basePrompt}`;
-      console.log(`[gen-image] slot=${slot.key} prompt=${prompt.slice(0, 100)}... ratio=${slot.aspectRatio}`);
-      const result = await generateImage(prompt, slot.aspectRatio);
-      imageResultMap[slot.key] = result;
-      return result;
-    })
-  );
+  if (isFutureBaby) {
+    // Generate baby (image_1) first, then describe its face
+    const babySlot = noRefSlots.find(s => s.key === 'image_1');
+    const otherSlots = noRefSlots.filter(s => s.key !== 'image_1');
+
+    if (babySlot) {
+      if (!shouldRetryImage(babySlot.key) && prevAssets?.images?.[babySlot.key]) {
+        console.log(`[retry-skip] slot=${babySlot.key} reusing previous image`);
+        imageResultMap[babySlot.key] = prevAssets.images[babySlot.key];
+      } else {
+        const rawPrompt = pickPrompt(adminPrompts[babySlot.promptKey]) || values[babySlot.promptKey] || 'portrait photo';
+        const basePrompt = rawPrompt.replace(/\{country\}/gi, country).replace(/\{gender\}/gi, values.gender || 'female');
+        const prompt = varyPrompt(`${getEthnicityInstruction(country)}${basePrompt}`, babySlot.key);
+        console.log(`[gen-image] slot=${babySlot.key} prompt=${prompt.slice(0, 100)}... ratio=${babySlot.aspectRatio}`);
+        const babyResult = await generateImage(prompt, babySlot.aspectRatio);
+        imageResultMap[babySlot.key] = babyResult;
+      }
+
+      // Describe baby's face for genetic inheritance
+      const babyImage = imageResultMap[babySlot.key];
+      if (babyImage?.path) {
+        try {
+          babyFaceDesc = await describeFace(babyImage.path);
+          console.log(`[future-baby] baby face described: ${babyFaceDesc.slice(0, 100)}...`);
+        } catch (err) {
+          console.warn('[future-baby] Failed to describe baby face:', err.message);
+        }
+      }
+    }
+
+    // Generate parent images with baby's genetic features (short traits only to avoid safety filter)
+    await Promise.all(
+      otherSlots.map(async slot => {
+        if (!shouldRetryImage(slot.key) && prevAssets?.images?.[slot.key]) {
+          console.log(`[retry-skip] slot=${slot.key} reusing previous image`);
+          imageResultMap[slot.key] = prevAssets.images[slot.key];
+          return;
+        }
+        const rawPrompt = pickPrompt(adminPrompts[slot.promptKey]) || values[slot.promptKey] || 'portrait photo, professional photography';
+        const basePrompt = rawPrompt.replace(/\{country\}/gi, country).replace(/\{gender\}/gi, values.gender || 'female');
+        let shortTraits = '';
+        if (babyFaceDesc) {
+          const skinMatch = babyFaceDesc.match(/(?:fair|light|medium|olive|tan|dark|brown|pale|warm|cool)\s*(?:skin|complexion|toned?)/i);
+          const eyeMatch = babyFaceDesc.match(/(?:blue|green|brown|hazel|dark|light|gray|black)\s*eyes?/i);
+          const hairMatch = babyFaceDesc.match(/(?:blonde|brown|black|red|dark|light|auburn|chestnut)\s*hair/i);
+          const parts = [skinMatch?.[0], eyeMatch?.[0], hairMatch?.[0]].filter(Boolean);
+          shortTraits = parts.length ? parts.join(', ') + '. ' : '';
+        }
+        const prompt = varyPrompt(`${getEthnicityInstruction(country)}${shortTraits}${basePrompt}`, slot.key);
+        console.log(`[gen-image] slot=${slot.key} prompt=${prompt.slice(0, 100)}... ratio=${slot.aspectRatio}`);
+        const result = await generateImage(prompt, slot.aspectRatio);
+        imageResultMap[slot.key] = result;
+        return result;
+      })
+    );
+  } else {
+    // Normal flow: generate all non-ref images in parallel
+    await Promise.all(
+      noRefSlots.map(async slot => {
+        // Retry check: reuse previous image if not retrying this slot
+        if (!shouldRetryImage(slot.key) && prevAssets?.images?.[slot.key]) {
+          console.log(`[retry-skip] slot=${slot.key} reusing previous image`);
+          imageResultMap[slot.key] = prevAssets.images[slot.key];
+          return;
+        }
+        // Check if user uploaded a file for this slot
+        const uploadedPath = values.uploaded_files?.[slot.key];
+        if (uploadedPath && existsSync(uploadedPath)) {
+          console.log(`[upload] slot=${slot.key} using uploaded file: ${uploadedPath}`);
+          imageResultMap[slot.key] = { type: 'file', path: uploadedPath };
+          return;
+        }
+        const rawPrompt = pickPrompt(adminPrompts[slot.promptKey]) || values[slot.promptKey] || 'portrait photo, professional photography';
+        const basePrompt = rawPrompt.replace(/\{country\}/gi, country).replace(/\{gender\}/gi, values.gender || 'female');
+        const prompt = varyPrompt(`${getEthnicityInstruction(country)}${basePrompt}`, slot.key);
+        console.log(`[gen-image] slot=${slot.key} prompt=${prompt.slice(0, 100)}... ratio=${slot.aspectRatio}`);
+        const result = await generateImage(prompt, slot.aspectRatio);
+        imageResultMap[slot.key] = result;
+        return result;
+      })
+    );
+  }
 
   // Generate ref images sequentially: use editImage to keep person 100% identical
   for (const slot of refSlots) {
+    // Retry check: reuse previous image if not retrying this slot
+    if (!shouldRetryImage(slot.key) && prevAssets?.images?.[slot.key]) {
+      console.log(`[retry-skip] ref slot=${slot.key} reusing previous image`);
+      imageResultMap[slot.key] = prevAssets.images[slot.key];
+      continue;
+    }
+    // Check if user uploaded a file for this slot
+    const uploadedRefPath = values.uploaded_files?.[slot.key];
+    if (uploadedRefPath && existsSync(uploadedRefPath)) {
+      console.log(`[upload] ref slot=${slot.key} using uploaded file: ${uploadedRefPath}`);
+      imageResultMap[slot.key] = { type: 'file', path: uploadedRefPath };
+      continue;
+    }
     const refTarget = refMap[slot.key]; // e.g. "image_1"
     const refResult = imageResultMap[refTarget];
-    const basePrompt = adminPrompts[slot.promptKey] || values[slot.promptKey] || '';
+    const rawRefPrompt = pickPrompt(adminPrompts[slot.promptKey]) || values[slot.promptKey] || '';
+    let basePrompt = rawRefPrompt
+      .replace(/\{country\}/gi, country)
+      .replace(/\{gender\}/gi, values.gender || 'female')
+      .replace(/\[baby features\]/gi, babyFaceDesc || 'similar genetic features');
 
+    // For future baby ref slots: generate a NEW parent image (don't editImage the baby)
+    if (isFutureBaby) {
+      let faceDesc = babyFaceDesc;
+      if (!faceDesc && refResult?.path) {
+        try {
+          faceDesc = await describeFace(refResult.path);
+        } catch (err) {
+          console.warn(`Face describe failed for baby ref:`, err.message);
+        }
+      }
+      // Extract only key traits (skin tone, eye color, hair color) to keep prompt short and avoid safety filter
+      let shortTraits = '';
+      if (faceDesc) {
+        const skinMatch = faceDesc.match(/(?:fair|light|medium|olive|tan|dark|brown|pale|warm|cool)\s*(?:skin|complexion|toned?)/i);
+        const eyeMatch = faceDesc.match(/(?:blue|green|brown|hazel|dark|light|gray|black)\s*eyes?/i);
+        const hairMatch = faceDesc.match(/(?:blonde|brown|black|red|dark|light|auburn|chestnut)\s*hair/i);
+        const parts = [skinMatch?.[0], eyeMatch?.[0], hairMatch?.[0]].filter(Boolean);
+        shortTraits = parts.length ? parts.join(', ') + '. ' : '';
+      }
+      const prompt = varyPrompt(`${getEthnicityInstruction(country)}${shortTraits}${basePrompt || 'portrait photo, professional photography'}`, slot.key);
+      console.log(`[future-baby] generating parent slot=${slot.key} prompt=${prompt.slice(0, 120)}...`);
+      const result = await generateImage(prompt, slot.aspectRatio);
+      imageResultMap[slot.key] = result;
+      continue;
+    }
+
+    // Non-baby templates: use editImage to keep person identical
     if (refResult?.path) {
       try {
-        // Use editImage: edit the ref image directly, keeping person identical
         const result = await editImage(refResult.path, basePrompt, slot.aspectRatio);
         imageResultMap[slot.key] = result;
         continue;
@@ -181,7 +384,7 @@ export async function processBatchLanguage(lang, values, templateCode = 'tmpl1',
     const refPrefix = faceDesc
       ? `IMPORTANT: The person must have these exact facial features: ${faceDesc}. `
       : '';
-    const prompt = `${refPrefix}${country} ${basePrompt || 'portrait photo, professional photography'}`;
+    const prompt = varyPrompt(`${refPrefix}${getEthnicityInstruction(country)}${basePrompt || 'portrait photo, professional photography'}`, slot.key);
     const result = await generateImage(prompt, slot.aspectRatio);
     imageResultMap[slot.key] = result;
   }
@@ -216,7 +419,7 @@ export async function processBatchLanguage(lang, values, templateCode = 'tmpl1',
   // Generate description if field exists and admin has a prompt
   const descField = dynFields.find(f => f.key === 'description');
   if (descField && !assets.description) {
-    const descPrompt = adminPrompts.description_prompt || '';
+    const descPrompt = pickPrompt(adminPrompts.description_prompt);
     if (descPrompt) {
       let dp = descPrompt.replace(/\{lang\}/gi, name).replace(/\{feature\}/gi, featureName || 'app');
       if (!descPrompt.match(/\{lang\}/i)) dp += ` Language: ${name}.`;
@@ -239,30 +442,87 @@ export async function processBatchLanguage(lang, values, templateCode = 'tmpl1',
       width:1000px!important;
       max-width:1000px!important;
     }
-    [class*="img-inner"],[class*="img-block"] > div {
-      position:absolute!important;
-      left:0!important;top:0!important;right:0!important;bottom:0!important;
-      width:100%!important;height:100%!important;
-      transform:none!important;
+    [class*="img-inner"] img:not(.side-img-inner-img img):not(.side-img-inner-img2 img),
+    [class*="img-block"] img,
+    .gallery img,
+    .feature-img img,
+    .photo-frame img,
+    .main-img img,
+    .main-img-bg-img {
+      width:100%!important;
+      height:100%!important;
+      object-fit:cover!important;
+      object-position:center top!important;
     }
-    [class*="img-inner"] div,[class*="img-inner"] > div > div {
-      position:absolute!important;
-      left:0!important;top:0!important;
-      width:100%!important;height:100%!important;
-      transform:none!important;
-    }
-    [class*="img-inner"] img,[class*="img-block"] img {
-      width:100%!important;height:100%!important;object-fit:cover!important;
+    .side-img-inner-img img,
+    .side-img-inner-img2 img {
+      width:100%!important;
+      height:100%!important;
+      object-fit:cover!important;
+      object-position:center top!important;
     }
   </style>`;
   html = html.replace('</head>', wrapCSS + '</head>');
 
-  // Inject font override if provided
-  if (values.font) {
-    const fontCSS = `<link href="https://fonts.googleapis.com/css2?family=${encodeURIComponent(values.font)}:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>.title,.tagline,.content,.frame{font-family:'${values.font}',sans-serif!important;}</style>`;
-    html = html.replace('</head>', fontCSS + '</head>');
+  // Font handling: Poppins + Noto Sans variant per language for full character support
+  const NOTO_FONT_MAP = {
+    Japanese:   'Noto+Sans+JP',
+    Korean:     'Noto+Sans+KR',
+    Chinese:    'Noto+Sans+SC',
+    Thai:       'Noto+Sans+Thai',
+    Hindi:      'Noto+Sans+Devanagari',
+    Arabic:     'Noto+Sans+Arabic',
+    Russian:    'Noto+Sans',
+    Hebrew:     'Noto+Sans+Hebrew',
+    Greek:      'Noto+Sans',
+    Bengali:    'Noto+Sans+Bengali',
+    Tamil:      'Noto+Sans+Tamil',
+    Telugu:     'Noto+Sans+Telugu',
+    Kannada:    'Noto+Sans+Kannada',
+    Malayalam:  'Noto+Sans+Malayalam',
+    Burmese:    'Noto+Sans+Myanmar',
+    Khmer:      'Noto+Sans+Khmer',
+    Lao:        'Noto+Sans+Lao',
+    Georgian:   'Noto+Sans+Georgian',
+    Armenian:   'Noto+Sans+Armenian',
+    Mongolian:  'Noto+Sans+Mongolian',
+    Vietnamese: 'Noto+Sans',
+    English:    'Noto+Sans',
+    French:     'Noto+Sans',
+    Spanish:    'Noto+Sans',
+    Portuguese: 'Noto+Sans',
+    German:     'Noto+Sans',
+    Italian:    'Noto+Sans',
+    Dutch:      'Noto+Sans',
+    Polish:     'Noto+Sans',
+    Swedish:    'Noto+Sans',
+    Turkish:    'Noto+Sans',
+    Indonesian: 'Noto+Sans',
+    Malay:      'Noto+Sans',
+  };
+
+  const langKey = lang.name || lang.country || '';
+  const notoVariant = NOTO_FONT_MAP[langKey] || 'Noto+Sans';
+  const notoName = notoVariant.replace(/\+/g, ' ');
+  const userFont = values.font;
+
+  // Always load Poppins (full subset) + Noto Sans variant for complete character coverage
+  const families = [`Poppins:wght@400;600;700;800`];
+  if (notoVariant !== 'Noto+Sans') families.push(`${notoVariant}:wght@400;600;700;800`);
+  families.push('Noto+Sans:wght@400;600;700;800');
+
+  const primaryFont = userFont || 'Poppins';
+  const fontStack = userFont
+    ? `'${userFont}','${notoName}','Noto Sans',sans-serif`
+    : `'Poppins','${notoName}','Noto Sans',sans-serif`;
+
+  if (userFont) {
+    families.unshift(`${encodeURIComponent(userFont)}:wght@400;600;700;800`);
   }
+
+  const fontCSS = `<link href="https://fonts.googleapis.com/css2?${families.map(f => 'family=' + f).join('&')}&display=swap" rel="stylesheet">
+  <style>*{font-family:${fontStack}!important;}</style>`;
+  html = html.replace('</head>', fontCSS + '</head>');
 
   // 5. Screenshot
   const safeName = featureName ? featureName.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') : '';
@@ -272,5 +532,14 @@ export async function processBatchLanguage(lang, values, templateCode = 'tmpl1',
   const dims = getTemplateDimensions(templateCode);
   const result = await captureScreenshot(html, jobId, dims);
 
-  return { filename: result.filename, url: `/api/output/${result.filename}` };
+  // Return result with intermediate assets for retry support
+  return {
+    filename: result.filename,
+    url: `/api/output/${result.filename}`,
+    _intermediateAssets: {
+      tagline: t1,
+      customFields: values._customFields || null,
+      images: imageResultMap,
+    }
+  };
 }

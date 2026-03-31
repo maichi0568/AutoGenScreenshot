@@ -65,18 +65,19 @@
     }
     .template-main-img-inner {
       position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
+      left: -59.14px;
+      top: -136.09px;
+      width: 1024.272px;
+      height: 1792.914px;
     }
     .template-main-img-inner img {
       position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
       object-fit: cover;
-      object-position: center top;
       pointer-events: none;
+      max-width: none;
     }
     .template-circle-img-container {
       position: absolute;
@@ -94,23 +95,31 @@
     }
     .template-circle-img-inner {
       position: absolute;
-      left: 0;
-      top: 0;
+      left: calc(-47.49% - 12.6px);
+      right: calc(-35.41% - 11.04px);
+      top: calc(50% + 222.72px);
+      transform: translateY(-50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      aspect-ratio: 585 / 1024;
       width: 100%;
       height: 100%;
     }
     .template-circle-img-inner-rotated {
-      width: 100%;
-      height: 100%;
+      transform: scaleY(-1) rotate(180deg);
+      width: 814.701px;
+      height: 1426.074px;
+      flex: none;
     }
-    .template-circle-img-inner-rotated img,
-    .template-circle-img-inner img {
+    .template-circle-img-inner-rotated img {
       position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
       object-fit: cover;
-      object-position: center top;
       pointer-events: none;
+      max-width: none;
     }
     .template-svg-group-container {
       position: absolute;
@@ -142,6 +151,7 @@
   <div class="template-bg" data-name="Template1" data-node-id="1:2">
     <div class="template-title" data-node-id="1:3">
       <p>{{text_1}}</p>
+      
     </div>
     <div class="template-main-img-container" data-node-id="1:4">
       <div class="template-main-img-inner" data-name="image 4104" data-node-id="1:5">

@@ -16,13 +16,14 @@ const TEMPLATE_META = {
   minimal: { width: 1242, height: 2688, placeholders: ['img1', 'tagline', 'background', 'ui'] },
   bold:    { width: 1242, height: 2688, placeholders: ['img1', 'tagline', 'background', 'ui'] },
   hair:    { width: 1080, height: 1920, placeholders: ['image_1', 'image_2', 'image_3', 'text_1'] },
-  mockup:  { width: 1080, height: 1920, placeholders: ['image_1', 'image_2', 'text_1'] },
+  mockup:  { width: 1080, height: 1920, placeholders: ['image_1', 'text_1'] },
   i2i:     { width: 1080, height: 1920, placeholders: ['image_1', 'image_2', 'text_1'] },
   multistyle: { width: 1080, height: 1920, placeholders: ['image_1', 'image_2', 'image_3', 'image_4', 'image_5', 'image_6', 'image_7', 'image_8', 'text_1'] },
   filter:  { width: 1080, height: 1920, placeholders: ['image_1', 'text_1'] },
   '2i2i':  { width: 1080, height: 1920, placeholders: ['image_1', 'image_2', 'image_3', 'text_1'] },
   '2i2i1': { width: 1080, height: 1920, placeholders: ['image_1', 'image_2', 'image_3', 'text_1'] },
   makeup:  { width: 1080, height: 1920, placeholders: ['image_1', 'image_2', 'text_1'] },
+  makeup2: { width: 1080, height: 1920, placeholders: ['image_1', 'image_2', 'text_1'] },
   ti2v:    { width: 1080, height: 1920, placeholders: ['image_1', 'image_2', 'text_1', 'description'] },
   i2i1:    { width: 1080, height: 1920, placeholders: ['image_1', 'image_2', 'text_1'] },
 };
@@ -43,6 +44,19 @@ export function renderTemplate(template, assets) {
     html = html.replace('href="styles.css"', '');
     html = html.replace(/(<head[^>]*>)/i, `$1\n  <style>${cssContent}</style>`);
   }
+
+  // Inline local template files: {{file:filename.svg}} → base64 data URI
+  const templateDir = join('./templates', code);
+  html = html.replace(/\{\{file:([^}]+)\}\}/g, (match, filename) => {
+    const filePath = join(templateDir, filename);
+    if (existsSync(filePath)) {
+      const data = readFileSync(filePath);
+      const ext = filename.split('.').pop().toLowerCase();
+      const mime = ext === 'svg' ? 'image/svg+xml' : `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+      return `data:${mime};base64,${data.toString('base64')}`;
+    }
+    return match;
+  });
 
   // Replace all {{key}} placeholders
   for (const [key, value] of Object.entries(assets)) {

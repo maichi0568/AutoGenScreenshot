@@ -74,5 +74,5 @@ export function generateWrapCSS() {
 export function generateFontCSS(fontFamily) {
   if (!fontFamily) return '';
   return `<link href="https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontFamily)}:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <style>.title,.tagline,.content,.frame,.figma-title,.figma-bg{font-family:'${fontFamily}',sans-serif!important;}</style>`;
+  <style>*{font-family:'${fontFamily}',sans-serif!important;}</style>`;
 }

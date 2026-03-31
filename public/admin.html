@@ -124,6 +124,19 @@ body{background:#09090b;color:#f1f5f9;font-family:'Inter',system-ui,sans-serif;h
 
 .prompt-card-footer{padding:6px 16px 10px;font-size:11px;color:#27272a;display:flex;align-items:center;gap:6px}
 
+/* Multi-prompt */
+.prompt-list{display:flex;flex-direction:column;gap:0}
+.prompt-item{position:relative;border-bottom:1px solid #1a1a26}
+.prompt-item:last-child{border-bottom:none}
+.prompt-item textarea{padding-right:36px}
+.prompt-item-idx{position:absolute;left:16px;top:16px;font-size:10px;font-weight:700;color:#3f3f46;background:#18181b;border-radius:4px;padding:1px 6px;z-index:1;pointer-events:none}
+.prompt-item textarea{padding-left:44px}
+.btn-remove-prompt{position:absolute;right:8px;top:8px;width:24px;height:24px;border:none;background:rgba(248,113,113,.1);border-radius:6px;color:#f87171;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s}
+.prompt-item:hover .btn-remove-prompt{opacity:1}
+.btn-add-prompt{display:flex;align-items:center;gap:6px;padding:8px 16px;background:transparent;border:1px dashed #27272a;border-radius:0 0 14px 14px;color:#52525b;font-size:12px;font-weight:500;cursor:pointer;width:100%;font-family:inherit;transition:all .15s}
+.btn-add-prompt:hover{border-color:rgba(240,96,96,.4);color:#F9A3A3;background:rgba(240,96,96,.04)}
+.prompt-count-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:rgba(240,96,96,.12);color:#F06060}
+
 /* Ref select */
 .ref-row{padding:0 16px 10px;display:flex;align-items:center;gap:8px;border-top:1px solid #1e1e2e;padding-top:10px}
 .ref-label{font-size:11px;font-weight:600;color:#52525b;flex-shrink:0}
@@ -144,6 +157,8 @@ body{background:#09090b;color:#f1f5f9;font-family:'Inter',system-ui,sans-serif;h
 /* Delete btn */
 .del-btn{width:20px;height:20px;border:none;background:transparent;color:#3f3f46;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:4px;font-size:14px;transition:all .1s;flex-shrink:0;padding:0}
 .del-btn:hover{color:#f87171;background:rgba(248,113,113,.1)}
+.edit-btn{width:20px;height:20px;border:none;background:transparent;color:#3f3f46;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:4px;font-size:12px;transition:all .1s;flex-shrink:0;padding:0}
+.edit-btn:hover{color:#818cf8;background:rgba(99,102,241,.1)}
 
 /* Modal */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:center;justify-content:center}
@@ -236,6 +251,7 @@ body{background:#09090b;color:#f1f5f9;font-family:'Inter',system-ui,sans-serif;h
     <div class="topbar-spacer"></div>
     <span class="save-toast" id="saveToast"></span>
     <button class="btn-save" id="saveBtn" onclick="saveAll()">Save changes</button>
+    <button onclick="doLogout()" style="padding:8px 16px;border-radius:8px;border:1px solid rgba(248,113,113,.3);background:transparent;color:#f87171;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;margin-left:8px">Logout</button>
   </div>
 
   <div class="right-content" id="right-content">
@@ -261,6 +277,11 @@ let activeTemplateKey = null; // "featureId::code"
 
 let availableTemplates = []; // all template folder codes
 let fieldConfig = {}; // { templateCode: [{key, type, label, ratio}] }
+
+async function doLogout() {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  window.location.href = '/login.html';
+}
 
 // ===== INIT =====
 async function init() {
@@ -290,6 +311,7 @@ function renderGroups() {
         <span class="group-icon">${g.icon}</span>
         <span class="group-name">${esc(g.name)}</span>
         <span class="group-count">${g.features.length}</span>
+        <button class="edit-btn" onclick="event.stopPropagation();showEditCategory('${g.id}')" title="Edit category">✏</button>
         <button class="del-btn" onclick="event.stopPropagation();deleteCategory('${g.id}')" title="Delete category">&times;</button>
         <span class="group-arrow">▶</span>
       </div>
@@ -300,6 +322,7 @@ function renderGroups() {
               <span class="f-icon">${f.icon}</span>
               <span class="f-name">${esc(f.name)}</span>
               <span class="f-tpl-count">${f.templates.length} tpl</span>
+              <button class="edit-btn" onclick="event.stopPropagation();showEditFeature('${g.id}','${f.id}')" title="Edit feature">✏</button>
               <button class="del-btn" onclick="event.stopPropagation();deleteFeature('${g.id}','${f.id}')" title="Delete feature">&times;</button>
             </div>
             <div class="tpl-wrap" id="twrap-${f.id}">
@@ -307,6 +330,7 @@ function renderGroups() {
                 <div class="tpl-item" id="titem-${f.id}-${t.code}" onclick="selectTemplate('${f.id}','${t.code}')">
                   <span class="tpl-dot"></span>
                   <span class="tpl-name">${esc(t.name)}</span>
+                  <button class="edit-btn" onclick="event.stopPropagation();showEditTemplate('${g.id}','${f.id}','${t.code}')" title="Edit template">✏</button>
                   <button class="del-btn" onclick="event.stopPropagation();deleteTemplate('${g.id}','${f.id}','${t.code}')" title="Remove template">&times;</button>
                 </div>
               `).join('')}
@@ -430,49 +454,111 @@ function renderPromptEditor(code, feature, tplInfo) {
           <div style="font-size:12px;color:#3f3f46;margin-top:4px;line-height:1.5">
             ${esc(slotDef?.description || '')}
           </div>
+          <button onclick="refreshPreview('${code}')" style="margin-top:8px;padding:5px 14px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);border-radius:6px;color:#818cf8;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">🔄 Refresh Preview</button>
         </div>
       </div>
     </div>
   `;
 
+  // Demo text section
+  const demoAppName = (promptData[code] || {}).demo_app_name || '';
+  const demoTagline = (promptData[code] || {}).demo_tagline || '';
+  html += `<div class="prompt-section-title">Demo Text (Preview)</div>`;
+  html += `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px">
+      <div class="prompt-card">
+        <div class="prompt-card-header">
+          <div class="prompt-icon" style="background:rgba(74,222,128,.15)">📱</div>
+          <span class="prompt-label">App Name</span>
+        </div>
+        <div style="padding:12px 16px">
+          <input class="sb-input" style="width:100%;padding:10px 12px;background:#0c0c10;border:1px solid #27272a;border-radius:8px;color:#f1f5f9;font-size:13px;outline:none"
+            value="${escAttr(demoAppName)}"
+            placeholder="e.g. PhotoAI, CallerID Pro..."
+            data-code="${code}" data-key="demo_app_name"
+            oninput="onPromptInput(this)">
+        </div>
+        <div class="prompt-card-footer">Tên app hiển thị trong preview</div>
+      </div>
+      <div class="prompt-card">
+        <div class="prompt-card-header">
+          <div class="prompt-icon" style="background:rgba(250,204,21,.15)">💬</div>
+          <span class="prompt-label">Demo Tagline</span>
+        </div>
+        <div style="padding:12px 16px">
+          <textarea rows="2" style="display:block;width:100%;background:#0c0c10;border:1px solid #27272a;border-radius:8px;color:#f1f5f9;font-size:13px;line-height:1.65;padding:10px 12px;resize:none;font-family:inherit;outline:none"
+            placeholder="e.g. Transform Your Look\\nWith AI Magic"
+            data-code="${code}" data-key="demo_tagline"
+            oninput="onPromptInput(this)"
+          >${escAttr(demoTagline)}</textarea>
+        </div>
+        <div class="prompt-card-footer">Tagline hiển thị trong preview. Dùng \\n để xuống dòng</div>
+      </div>
+    </div>
+  `;
+
   // Tagline prompt section (always shown)
-  const taglineVal = (promptData[code] || {}).tagline_prompt || '';
+  const taglineRaw = (promptData[code] || {}).tagline_prompt || '';
+  const taglineArr = Array.isArray(taglineRaw) ? taglineRaw : (taglineRaw ? [taglineRaw] : ['']);
   html += `<div class="prompt-section-title">Tagline Prompt</div>`;
   html += `
     <div class="prompt-card" style="margin-bottom:24px">
       <div class="prompt-card-header">
         <div class="prompt-icon" style="background:rgba(99,102,241,.15)">✍️</div>
         <span class="prompt-label">Auto-generate Tagline</span>
+        ${taglineArr.length > 1 ? `<span class="prompt-count-badge">${taglineArr.length} variants</span>` : ''}
         <span class="ratio-badge" style="background:rgba(99,102,241,.15);color:#818cf8">AI</span>
       </div>
-      <textarea rows="4"
-        placeholder="e.g. Generate a catchy tagline for {feature} in {lang}. Max 6 words, 2 lines..."
-        data-code="${code}"
-        data-key="tagline_prompt"
-        oninput="onPromptInput(this)"
-      >${escAttr(taglineVal)}</textarea>
-      <div class="prompt-card-footer">tagline_prompt — Use {lang}, {feature}, {template} as placeholders</div>
+      <div class="prompt-list" id="plist-${code}-tagline_prompt">
+        ${taglineArr.map((v, i) => `
+          <div class="prompt-item">
+            <span class="prompt-item-idx">#${i+1}</span>
+            <textarea rows="3"
+              placeholder="e.g. Generate a catchy tagline for {feature} in {lang}..."
+              data-code="${code}"
+              data-key="tagline_prompt"
+              data-idx="${i}"
+              oninput="onMultiPromptInput(this)"
+            >${escAttr(v)}</textarea>
+            ${taglineArr.length > 1 ? `<button class="btn-remove-prompt" onclick="removePromptVariant('${code}','tagline_prompt',${i})">×</button>` : ''}
+          </div>
+        `).join('')}
+      </div>
+      <button class="btn-add-prompt" onclick="addPromptVariant('${code}','tagline_prompt')">+ Add variant</button>
+      <div class="prompt-card-footer">tagline_prompt — Random pick khi generate. Use {lang}, {feature}, {template}</div>
     </div>
   `;
 
   // Description prompt (shown if template has a description field)
   const hasDesc = fieldConfig[code]?.some(f => f.key === 'description');
   if (hasDesc) {
-    const descVal = (promptData[code] || {}).description_prompt || '';
+    const descRaw = (promptData[code] || {}).description_prompt || '';
+    const descArr = Array.isArray(descRaw) ? descRaw : (descRaw ? [descRaw] : ['']);
     html += `
       <div class="prompt-card" style="margin-bottom:24px">
         <div class="prompt-card-header">
           <div class="prompt-icon" style="background:rgba(34,197,94,.15)">📝</div>
           <span class="prompt-label">Auto-generate Description</span>
+          ${descArr.length > 1 ? `<span class="prompt-count-badge">${descArr.length} variants</span>` : ''}
           <span class="ratio-badge" style="background:rgba(34,197,94,.15);color:#4ade80">AI</span>
         </div>
-        <textarea rows="4"
-          placeholder="e.g. Write a short app description for {feature} in {lang}. Max 2 sentences..."
-          data-code="${code}"
-          data-key="description_prompt"
-          oninput="onPromptInput(this)"
-        >${escAttr(descVal)}</textarea>
-        <div class="prompt-card-footer">description_prompt — Use {lang}, {feature}, {template} as placeholders</div>
+        <div class="prompt-list" id="plist-${code}-description_prompt">
+          ${descArr.map((v, i) => `
+            <div class="prompt-item">
+              <span class="prompt-item-idx">#${i+1}</span>
+              <textarea rows="3"
+                placeholder="e.g. Write a short app description for {feature} in {lang}..."
+                data-code="${code}"
+                data-key="description_prompt"
+                data-idx="${i}"
+                oninput="onMultiPromptInput(this)"
+              >${escAttr(v)}</textarea>
+              ${descArr.length > 1 ? `<button class="btn-remove-prompt" onclick="removePromptVariant('${code}','description_prompt',${i})">×</button>` : ''}
+            </div>
+          `).join('')}
+        </div>
+        <button class="btn-add-prompt" onclick="addPromptVariant('${code}','description_prompt')">+ Add variant</button>
+        <div class="prompt-card-footer">description_prompt — Random pick khi generate. Use {lang}, {feature}, {template}</div>
       </div>
     `;
   }
@@ -489,10 +575,10 @@ function renderPromptEditor(code, feature, tplInfo) {
     html += `<div class="prompt-grid">`;
 
     slots.forEach(slot => {
-      const val = (promptData[code] || {})[slot.promptKey] || '';
+      const rawVal = (promptData[code] || {})[slot.promptKey] || '';
+      const valArr = Array.isArray(rawVal) ? rawVal : (rawVal ? [rawVal] : ['']);
       const refKey = slot.promptKey.replace('_prompt', '_ref');
       const refVal = (promptData[code] || {})[refKey] || 'none';
-      // Other slots as ref options (exclude self)
       const otherSlots = slots.filter(s => s.promptKey !== slot.promptKey);
       const refOptions = otherSlots.map(s => {
         const sRefKey = s.promptKey.replace('_prompt', '');
@@ -505,14 +591,25 @@ function renderPromptEditor(code, feature, tplInfo) {
             <div class="prompt-icon">📸</div>
             <span class="prompt-label">${esc(slot.label)}</span>
             ${refVal !== 'none' ? '<span class="ref-badge">REF</span>' : ''}
+            ${valArr.length > 1 ? `<span class="prompt-count-badge">${valArr.length} variants</span>` : ''}
             <span class="ratio-badge">${esc(slot.ratio)}</span>
           </div>
-          <textarea rows="4"
-            placeholder="e.g. Beautiful portrait, professional photography, soft lighting..."
-            data-code="${code}"
-            data-key="${slot.promptKey}"
-            oninput="onPromptInput(this)"
-          >${escAttr(val)}</textarea>
+          <div class="prompt-list" id="plist-${code}-${slot.promptKey}">
+            ${valArr.map((v, i) => `
+              <div class="prompt-item">
+                <span class="prompt-item-idx">#${i+1}</span>
+                <textarea rows="3"
+                  placeholder="e.g. Beautiful portrait, professional photography, soft lighting..."
+                  data-code="${code}"
+                  data-key="${slot.promptKey}"
+                  data-idx="${i}"
+                  oninput="onMultiPromptInput(this)"
+                >${escAttr(v)}</textarea>
+                ${valArr.length > 1 ? `<button class="btn-remove-prompt" onclick="removePromptVariant('${code}','${slot.promptKey}',${i})">×</button>` : ''}
+              </div>
+            `).join('')}
+          </div>
+          <button class="btn-add-prompt" onclick="addPromptVariant('${code}','${slot.promptKey}')">+ Add variant</button>
           <div class="ref-row">
             <span class="ref-label">Face ref:</span>
             <select class="ref-select"
@@ -525,13 +622,17 @@ function renderPromptEditor(code, feature, tplInfo) {
           </div>
           <div class="gen-row" style="padding:8px 16px 10px;border-top:1px solid #1e1e2e;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <button class="btn-gen-test" onclick="testGenImage('${code}','${slot.promptKey}','${slot.ratio}')" style="padding:5px 12px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);border-radius:6px;color:#818cf8;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">⚡ Test Gen</button>
+            <label style="padding:5px 12px;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);border-radius:6px;color:#4ade80;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px">
+              📷 Gen từ ảnh mẫu
+              <input type="file" accept="image/*" style="display:none" onchange="genFromRefAdmin(this,'${code}','${slot.promptKey}','${slot.ratio}')">
+            </label>
             ${refVal !== 'none' ? `
               <input type="text" id="mod-${slot.promptKey}" placeholder="Thay đổi: vd. thêm makeup, đổi tóc ngắn..." style="flex:1;padding:5px 10px;background:#0c0c10;border:1px solid #27272a;border-radius:6px;color:#a1a1aa;font-size:11px;font-family:inherit;outline:none;min-width:150px">
               <button class="btn-gen-var" onclick="genVariation('${code}','${slot.promptKey}','${refKey}','${slot.ratio}')" style="padding:5px 12px;background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.3);border-radius:6px;color:#a78bfa;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">🔄 Gen Variation</button>
             ` : ''}
             <div id="gen-preview-${slot.promptKey}" style="margin-top:8px;width:100%"></div>
           </div>
-          <div class="prompt-card-footer">${esc(slot.promptKey)}</div>
+          <div class="prompt-card-footer">${esc(slot.promptKey)} — Random pick khi generate</div>
         </div>
       `;
     });
@@ -586,6 +687,52 @@ function onPromptInput(el) {
   const key = el.dataset.key;
   if (!promptData[code]) promptData[code] = {};
   promptData[code][key] = el.value;
+}
+
+// ===== MULTI-PROMPT MANAGEMENT =====
+function ensurePromptArray(code, key) {
+  if (!promptData[code]) promptData[code] = {};
+  const val = promptData[code][key];
+  if (!Array.isArray(val)) {
+    promptData[code][key] = val ? [val] : [''];
+  }
+  return promptData[code][key];
+}
+
+function onMultiPromptInput(el) {
+  const code = el.dataset.code;
+  const key = el.dataset.key;
+  const idx = parseInt(el.dataset.idx, 10);
+  const arr = ensurePromptArray(code, key);
+  arr[idx] = el.value;
+  // If only 1 variant, store as string for backward compat
+  if (arr.length === 1) {
+    promptData[code][key] = arr[0];
+  }
+}
+
+function addPromptVariant(code, key) {
+  const arr = ensurePromptArray(code, key);
+  arr.push('');
+  // Re-render template panel
+  if (activeTemplateKey) {
+    const [fid, tcode] = activeTemplateKey.split('::');
+    selectTemplate(fid, tcode);
+  }
+}
+
+function removePromptVariant(code, key, idx) {
+  const arr = ensurePromptArray(code, key);
+  if (arr.length <= 1) return;
+  arr.splice(idx, 1);
+  // If only 1 left, store as string
+  if (arr.length === 1) {
+    promptData[code][key] = arr[0];
+  }
+  if (activeTemplateKey) {
+    const [fid, tcode] = activeTemplateKey.split('::');
+    selectTemplate(fid, tcode);
+  }
 }
 
 function onRefChange(el) {
@@ -1032,8 +1179,10 @@ function escAttr(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&
 const genResults = {}; // { promptKey: imageUrl }
 
 async function testGenImage(code, promptKey, ratio) {
-  const textarea = document.querySelector(`textarea[data-code="${code}"][data-key="${promptKey}"]`);
-  const prompt = textarea?.value?.trim();
+  // Pick first non-empty prompt variant for testing
+  const textareas = document.querySelectorAll(`textarea[data-code="${code}"][data-key="${promptKey}"]`);
+  let prompt = '';
+  textareas.forEach(ta => { if (!prompt && ta.value.trim()) prompt = ta.value.trim(); });
   if (!prompt) return alert('Prompt is empty');
 
   const preview = document.getElementById('gen-preview-' + promptKey);
@@ -1103,6 +1252,150 @@ async function genVariation(code, promptKey, refKey, ratio) {
   } catch (err) {
     preview.innerHTML = `<div style="font-size:12px;color:#f87171">❌ ${err.message}</div>`;
   }
+}
+
+// ===== GEN FROM REFERENCE IMAGE (ADMIN) =====
+async function genFromRefAdmin(input, code, promptKey, ratio) {
+  const file = input.files?.[0];
+  if (!file) return;
+
+  const preview = document.getElementById('gen-preview-' + promptKey);
+  if (preview) preview.innerHTML = '<div style="font-size:12px;color:#4ade80">⏳ Đang phân tích ảnh mẫu & gen ảnh mới...</div>';
+
+  try {
+    const formData = new FormData();
+    formData.append('ref_image', file);
+    formData.append('aspectRatio', ratio);
+
+    const res = await fetch('/api/gen-from-ref-image', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    genResults[promptKey] = data.url;
+    if (preview) {
+      preview.innerHTML = `
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="text-align:center">
+            <img src="${URL.createObjectURL(file)}" style="width:60px;border-radius:8px;border:1px solid #27272a" title="Ảnh mẫu">
+            <div style="font-size:9px;color:#52525b;margin-top:2px">Mẫu</div>
+          </div>
+          <span style="color:#52525b;font-size:16px;align-self:center">→</span>
+          <div style="text-align:center">
+            <img src="${data.url}" style="width:80px;border-radius:8px;border:1px solid #4ade80">
+            <div style="font-size:9px;color:#4ade80;margin-top:2px">Gen mới</div>
+          </div>
+          <div style="font-size:11px;color:#4ade80;align-self:center">✅ Đã gen từ ảnh mẫu</div>
+        </div>
+      `;
+    }
+  } catch (err) {
+    if (preview) preview.innerHTML = `<div style="font-size:12px;color:#f87171">❌ ${err.message}</div>`;
+  }
+  input.value = '';
+}
+
+// ===== REFRESH PREVIEW =====
+function refreshPreview(code) {
+  const box = document.getElementById('tpl-preview-box');
+  if (!box) return;
+  // Must save demo text first, then reload iframe
+  saveAll().then(() => {
+    box.innerHTML = '';
+    const boxW = box.clientWidth || 120;
+    const scale = boxW / 1080;
+    const iframe = document.createElement('iframe');
+    iframe.style.width = '1080px';
+    iframe.style.height = '1920px';
+    iframe.style.transform = `scale(${scale})`;
+    iframe.style.transformOrigin = 'top left';
+    iframe.style.border = 'none';
+    iframe.style.pointerEvents = 'none';
+    iframe.sandbox = 'allow-same-origin allow-scripts';
+    iframe.src = `/preview/${code}?_t=${Date.now()}`;
+    box.appendChild(iframe);
+  });
+}
+
+// ===== EDIT CATEGORY =====
+function showEditCategory(gid) {
+  const group = DATA.find(g => g.id === gid);
+  if (!group) return;
+  openModal('Edit Category', `
+    <div class="modal-field"><label>Name</label><input id="m-edit-cat-name" value="${escAttr(group.name)}"></div>
+    <div class="modal-field"><label>Icon (emoji)</label><input id="m-edit-cat-icon" value="${escAttr(group.icon)}" maxlength="4"></div>
+  `, 'Save', () => {
+    const name = document.getElementById('m-edit-cat-name').value.trim();
+    const icon = document.getElementById('m-edit-cat-icon').value.trim();
+    if (!name) return;
+    group.name = name;
+    if (icon) group.icon = icon;
+    renderGroups();
+    // Re-open the group
+    activeGroupId = gid;
+    document.getElementById('gitem-' + gid)?.classList.add('active');
+    document.getElementById('fwrap-' + gid)?.classList.add('open');
+    closeModal();
+    showToast('Category updated (save to keep)', 'ok');
+  });
+}
+
+// ===== EDIT FEATURE =====
+function showEditFeature(gid, fid) {
+  const group = DATA.find(g => g.id === gid);
+  const feature = group?.features.find(f => f.id === fid);
+  if (!feature) return;
+  openModal('Edit Feature', `
+    <div class="modal-field"><label>Name</label><input id="m-edit-feat-name" value="${escAttr(feature.name)}"></div>
+    <div class="modal-field"><label>Description</label><input id="m-edit-feat-desc" value="${escAttr(feature.desc)}"></div>
+    <div class="modal-field"><label>Icon (emoji)</label><input id="m-edit-feat-icon" value="${escAttr(feature.icon)}" maxlength="4"></div>
+  `, 'Save', () => {
+    const name = document.getElementById('m-edit-feat-name').value.trim();
+    const desc = document.getElementById('m-edit-feat-desc').value.trim();
+    const icon = document.getElementById('m-edit-feat-icon').value.trim();
+    if (!name) return;
+    feature.name = name;
+    feature.desc = desc;
+    if (icon) feature.icon = icon;
+    renderGroups();
+    // Re-open group and feature
+    activeGroupId = gid;
+    activeFeatureId = fid;
+    document.getElementById('gitem-' + gid)?.classList.add('active');
+    document.getElementById('fwrap-' + gid)?.classList.add('open');
+    document.getElementById('fitem-' + fid)?.classList.add('active');
+    document.getElementById('twrap-' + fid)?.classList.add('open');
+    closeModal();
+    showToast('Feature updated (save to keep)', 'ok');
+  });
+}
+
+// ===== EDIT TEMPLATE =====
+function showEditTemplate(gid, fid, code) {
+  const group = DATA.find(g => g.id === gid);
+  const feature = group?.features.find(f => f.id === fid);
+  const tpl = feature?.templates.find(t => t.code === code);
+  if (!tpl) return;
+  openModal('Edit Template', `
+    <div class="modal-field"><label>Template Code</label><input value="${escAttr(tpl.code)}" disabled style="opacity:.5;cursor:not-allowed"></div>
+    <div class="modal-field"><label>Display Name</label><input id="m-edit-tpl-name" value="${escAttr(tpl.name)}"></div>
+    <div class="modal-field"><label>Size</label><input id="m-edit-tpl-size" value="${escAttr(tpl.size)}" placeholder="e.g. 1080x1920"></div>
+  `, 'Save', () => {
+    const name = document.getElementById('m-edit-tpl-name').value.trim();
+    const size = document.getElementById('m-edit-tpl-size').value.trim();
+    if (!name) return;
+    tpl.name = name;
+    if (size) tpl.size = size;
+    renderGroups();
+    // Re-open group, feature, and highlight template
+    activeGroupId = gid;
+    activeFeatureId = fid;
+    document.getElementById('gitem-' + gid)?.classList.add('active');
+    document.getElementById('fwrap-' + gid)?.classList.add('open');
+    document.getElementById('fitem-' + fid)?.classList.add('active');
+    document.getElementById('twrap-' + fid)?.classList.add('open');
+    closeModal();
+    showToast('Template updated (save to keep)', 'ok');
+  });
 }
 
 // ===== START =====

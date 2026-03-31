@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Apply AI styles to photos</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;800&display=swap');
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #000;
+      min-height: 1920px;
+      min-width: 1080px;
+      overflow-x: auto;
+    }
+    .template-bg {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      min-height: 1200px;
+      background: linear-gradient(180deg, #000 20.715%, #ff5858 55.485%, #f9a3a3 99.469%);
+      overflow: hidden;
+      margin: 0 auto;
+      font-family: 'Poppins', Arial, sans-serif;
+    }
+    .template-title {
+      position: absolute;
+      left: 50%;
+      top: 181px;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: center;
+      font-family: 'Poppins', Arial, sans-serif;
+      font-weight: 800;
+      font-size: 87.54px;
+      line-height: 103px;
+      text-transform: capitalize;
+      background: linear-gradient(90deg, #f37878, #ffe9e9);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-fill-color: transparent;
+      white-space: nowrap;
+      margin-bottom: 0;
+      z-index: 2;
+    }
+    .template-title p {
+      margin: 0;
+    }
+    .main-img-container {
+      position: absolute;
+      left: 87px;
+      top: 368px;
+      width: 906px;
+      height: 1708px;
+      border: 12px solid #fe9d9c;
+      border-radius: 80px 80px 0 0;
+      overflow: hidden;
+      box-sizing: border-box;
+      z-index: 1;
+      background: none;
+    }
+    /* Collage of images from Figma design */
+    /* .img-collage {
+      position: absolute;
+      left: 29.45px;
+      top: 415.26px;
+      width: 1000px;
+      height: 1500px;
+      pointer-events: none;
+      z-index: 2;
+    } */
+    .img-collage img {
+      position: absolute;
+      object-fit: cover;
+      max-width: none;
+      pointer-events: none;
+      border-radius: 40px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    }
+    .img1 { left: 90px; top: 490px; width: 504.03px; height: 635.24px; transform: rotate(-3.83deg); z-index: 2; }
+    .img2 { left: 80.45px; top: 1170px; width: 479.71px; height: 679.02px; transform: rotate(-7.3deg); z-index: 2; }
+    .img3 { left: 600.17px; top: 650px; width: 413.73px; height: 563.90px; transform: rotate(9.53deg); z-index: 2; }
+    .img4 { left: 590.92px; top: 1275px; width: 414.99px; height: 556.25px; transform: rotate(5.9deg); z-index: 2; }
+    .vector73 { left: 455.26px; top: 415px; width: 273.40px; height: 102.03px; transform: rotate(28.79deg); z-index: 3; }
+    .star1 { left: 849.28px; top: 488px; width: 49.66px; height: 49.66px; z-index: 4; }
+    .star2 { left: 772.17px; top: 405px; width: 77.11px; height: 77.11px; z-index: 4; }
+  </style>
+</head>
+<body>
+  <div class="template-bg" data-name="Template3" data-node-id="1:43">
+    <div class="template-title" data-node-id="1:44">
+      <p>{{text_1}}</p>
+      
+    </div>
+    <div class="main-img-container" data-node-id="1:45"></div>
+    <div class="img-collage">
+      <img class="img1" src="{{image_1}}" alt="img1">
+      <img class="img2" src="{{image_2}}" alt="img2">
+      <img class="img3" src="{{image_3}}" alt="img3">
+      <img class="img4" src="{{image_4}}" alt="img4">
+      <span class="vector73" style="position:absolute;left:510px;top:460px;width:273.40px;height:102.03px;transform:rotate(5deg);z-index:3;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="285" height="100" viewBox="0 0 285 100" fill="none">
+          <path d="M3.21677 34.936C51.6917 0.710423 175.185 -34.8955 281.358 96.4855" stroke="white" stroke-width="6.43302" stroke-linecap="round" stroke-dasharray="28.95 28.95"/>
+        </svg>
+      </span>
+      <span class="star1" style="position:absolute;left:849.28px;top:488px;width:49.66px;height:49.66px;z-index:4;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50" fill="none">
+          <g clip-path="url(#clip0_1_46)">
+            <path d="M49.1437 25.0035C35.7287 25.0035 24.8312 35.9772 24.8312 49.4861C24.8312 49.5902 24.7622 49.6597 24.6588 49.6597C24.5553 49.6597 24.4863 49.5902 24.4863 49.4861C24.4863 35.9772 13.5888 25.0035 0.173772 25.0035C0.0703146 25.0035 0.00134277 24.934 0.00134277 24.8298C0.00134277 24.7257 0.0703146 24.6562 0.173772 24.6562C13.5888 24.6562 24.4863 13.6825 24.4863 0.173635C24.4863 0.0694541 24.5553 0 24.6588 0C24.7622 0 24.8312 0.0694541 24.8312 0.173635C24.8312 13.6825 35.7287 24.6562 49.1437 24.6562C49.2472 24.6562 49.3162 24.7257 49.3162 24.8298C49.3162 24.934 49.2472 25.0035 49.1437 25.0035Z" fill="white"/>
+          </g>
+          <defs>
+            <clipPath id="clip0_1_46">
+              <rect width="49.6597" height="49.6597" fill="white"/>
+            </clipPath>
+          </defs>
+        </svg>
+      </span>
+      <span class="star2" style="position:absolute;left:772px;top:405px;width:77.11px;height:77.11px;z-index:4;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="78" height="78" viewBox="0 0 78 78" fill="none">
+          <g clip-path="url(#clip0_1_48)">
+            <path d="M76.3079 38.8241C55.4778 38.8241 38.5566 55.8635 38.5566 76.8393C38.5566 77.001 38.4495 77.1089 38.2889 77.1089C38.1283 77.1089 38.0212 77.001 38.0212 76.8393C38.0212 55.8635 21.1 38.8241 0.269936 38.8241C0.109293 38.8241 0.00219727 38.7162 0.00219727 38.5544C0.00219727 38.3927 0.109293 38.2848 0.269936 38.2848C21.1 38.2848 38.0212 21.2454 38.0212 0.269611C38.0212 0.107845 38.1283 0 38.2889 0C38.4495 0 38.5566 0.107845 38.5566 0.269611C38.5566 21.2454 55.4778 38.2848 76.3079 38.2848C76.4685 38.2848 76.5756 38.3927 76.5756 38.5544C76.5756 38.7162 76.4685 38.8241 76.3079 38.8241Z" fill="white"/>
+          </g>
+          <defs>
+            <clipPath id="clip0_1_48">
+              <rect width="77.1089" height="77.1089" fill="white"/>
+            </clipPath>
+          </defs>
+        </svg>
+      </span>
+    </div>
+  </div>
+</body>
+</html>

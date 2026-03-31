@@ -57,7 +57,7 @@ body{background:#09090b;color:#f1f5f9;font-family:'Inter',system-ui,sans-serif;h
 .dropdown-btn svg{flex-shrink:0;transition:transform .2s}
 .dropdown-btn.open svg{transform:rotate(180deg)}
 .dropdown-panel{position:absolute;top:100%;left:0;right:0;background:#111113;border:1px solid rgba(240,96,96,.3);border-top:none;border-radius:0 0 8px 8px;z-index:50;max-height:240px;display:flex;flex-direction:column;box-shadow:0 12px 32px rgba(0,0,0,.5)}
-.dropdown-panel.hidden{display:none}
+.dropdown-panel.hidden,.retry-menu.hidden{display:none}
 .dropdown-search{padding:8px 10px;border-bottom:1px solid #1e1e2e;flex-shrink:0}
 .dropdown-search input{width:100%;padding:7px 10px;background:#0c0c10;border:1px solid #27272a;border-radius:6px;color:#f1f5f9;font-size:12px;font-family:inherit;outline:none}
 .dropdown-search input:focus{border-color:rgba(240,96,96,.4)}
@@ -90,6 +90,16 @@ body{background:#09090b;color:#f1f5f9;font-family:'Inter',system-ui,sans-serif;h
 .text-panel-badge{padding:3px 10px;background:rgba(240,96,96,.1);border:1px solid rgba(240,96,96,.2);border-radius:6px;font-size:11px;font-weight:600;color:#F9A3A3}
 .text-panel-name{font-size:13px;font-weight:600;color:#e4e4e7}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* Upload field */
+.upload-zone{border:2px dashed #27272a;border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.upload-zone:hover{border-color:rgba(240,96,96,.4);background:rgba(240,96,96,.04)}
+.upload-zone.has-file{border-color:rgba(240,96,96,.3);background:rgba(240,96,96,.06);padding:6px}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upload-zone-label{font-size:12px;color:#52525b;pointer-events:none}
+.upload-zone-label svg{display:block;margin:0 auto 6px}
+.upload-preview{width:100%;border-radius:6px;display:block}
+.upload-remove{position:absolute;top:8px;right:8px;width:22px;height:22px;background:rgba(0,0,0,.7);border:none;border-radius:50%;color:#f1f5f9;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2}
 
 /* ===== MAIN AREA ===== */
 .main-area{flex:1;overflow-y:auto;padding:28px;background:#09090b}
@@ -124,9 +134,25 @@ body{background:#09090b;color:#f1f5f9;font-family:'Inter',system-ui,sans-serif;h
 .gen-row-dl:disabled{opacity:.4;cursor:not-allowed}
 .gen-row-thumbs{display:flex;gap:14px;padding:18px 18px;overflow-x:auto;min-height:200px;align-items:flex-start}
 .gen-row-empty{color:#3f3f46;font-size:13px;font-style:italic}
-.gen-thumb{flex-shrink:0;width:220px;aspect-ratio:9/16;border-radius:10px;overflow:hidden;border:1px solid #27272a;transition:all .2s;display:block}
+.gen-thumb-wrap{position:relative;flex-shrink:0;width:220px}
+.gen-thumb{width:100%;aspect-ratio:9/16;border-radius:10px;overflow:hidden;border:1px solid #27272a;transition:all .2s;display:block}
 .gen-thumb:hover{border-color:rgba(240,96,96,.5);transform:scale(1.03)}
 .gen-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.retry-btn{position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:8px;background:rgba(0,0,0,.7);border:1px solid #3f3f46;color:#d4d4d8;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;z-index:2}
+.gen-thumb-wrap:hover .retry-btn{opacity:1}
+.retry-btn:hover{background:rgba(240,96,96,.8);border-color:rgba(240,96,96,.6);color:#fff}
+.retry-menu{position:absolute;top:44px;right:4px;width:220px;background:#1c1c1e;border:1px solid #3f3f46;border-radius:10px;padding:8px 0;z-index:10;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.retry-menu .retry-title{padding:6px 14px;font-size:11px;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:.5px}
+.retry-menu .retry-option{display:flex;align-items:center;gap:8px;padding:8px 14px;font-size:13px;color:#d4d4d8;cursor:pointer;transition:background .15s}
+.retry-menu .retry-option:hover{background:#27272a}
+.retry-menu .retry-option .ri-check{width:16px;height:16px;border-radius:4px;border:1.5px solid #52525b;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.retry-menu .retry-option.checked .ri-check{background:#F06060;border-color:#F06060}
+.retry-menu .retry-sep{height:1px;background:#27272a;margin:4px 0}
+.retry-menu .retry-go{margin:8px 10px 4px;padding:8px;border-radius:8px;background:linear-gradient(135deg,#F06060,#f9a3a3);color:#fff;font-size:13px;font-weight:600;text-align:center;cursor:pointer;border:none;width:calc(100% - 20px);transition:opacity .15s}
+.retry-menu .retry-go:hover{opacity:.85}
+.retry-menu .retry-go:disabled{opacity:.4;cursor:not-allowed}
+.retry-spinning{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 @keyframes spin{to{transform:rotate(360deg)}}
 .spin{animation:spin .8s linear infinite}
@@ -147,6 +173,7 @@ body{background:#09090b;color:#f1f5f9;font-family:'Inter',system-ui,sans-serif;h
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
     Back
   </a>
+  <button class="btn-tb" onclick="fetch('/api/auth/logout',{method:'POST'}).then(()=>location.href='/login.html')" style="border-color:rgba(248,113,113,.3);color:#f87171">Logout</button>
   <button class="btn-tb btn-gen" id="btn-generate" onclick="generateAll()">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     Generate All
@@ -469,6 +496,12 @@ function setTplTaglineMode(mode) {
 
 // Per-template custom text storage: { tplCode: { key: value } }
 let customTextData = {};
+// Per-template uploaded files: { tplCode: { fieldKey: { path, previewUrl } } }
+let uploadedFiles = {};
+// Per-template reference images: { tplCode: { fieldKey: { path, previewUrl, extraPrompt } } }
+let refImages = {};
+// Generated results from reference: { "tplCode::fieldKey": url }
+let refGenResults = {};
 
 function renderCustomFields() {
   const container = document.getElementById('custom-fields-container');
@@ -479,31 +512,106 @@ function renderCustomFields() {
   const tpl = templates[activeIdx];
   const mode = getTplMode(tpl.code);
 
+  const fields = dynFieldConfig[tpl.code] || [];
+  const uploadFields = fields.filter(f => f.type === 'upload');
+  const textFields = fields.filter(f => f.type === 'text' || f.type === 'tagline');
+
+  // Upload fields — always show regardless of AI/custom mode
+  let uploadHTML = '';
+  if (uploadFields.length > 0) {
+    if (!uploadedFiles[tpl.code]) uploadedFiles[tpl.code] = {};
+    uploadHTML = uploadFields.map(f => {
+      const uploaded = uploadedFiles[tpl.code]?.[f.key];
+      if (uploaded) {
+        return `<div class="sb-field">
+          <label>${esc(f.label || f.key)}</label>
+          <div class="upload-zone has-file">
+            <button class="upload-remove" onclick="removeUpload('${tpl.code}','${f.key}')">&times;</button>
+            <img class="upload-preview" src="${uploaded.previewUrl}">
+            <input type="file" accept="image/*" onchange="handleUpload(this,'${tpl.code}','${f.key}')">
+          </div>
+        </div>`;
+      }
+      return `<div class="sb-field">
+        <label>${esc(f.label || f.key)}</label>
+        <div class="upload-zone">
+          <div class="upload-zone-label">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#52525b" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Click or drag to upload
+          </div>
+          <input type="file" accept="image/*" onchange="handleUpload(this,'${tpl.code}','${f.key}')">
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Reference image generation — for AI image slots
+  const imageFields = fields.filter(f => f.type === 'image');
+  let refGenHTML = '';
+  if (imageFields.length > 0) {
+    if (!refImages[tpl.code]) refImages[tpl.code] = {};
+    refGenHTML = `<div class="sb-label" style="margin-top:8px">Reference Image</div>
+      <div style="font-size:11px;color:#3f3f46;margin-bottom:10px">Upload ảnh mẫu → AI phân tích cấu trúc → gen ảnh mới tương tự</div>`;
+    refGenHTML += imageFields.map(f => {
+      const ref = refImages[tpl.code]?.[f.key];
+      const genResult = refGenResults[tpl.code + '::' + f.key];
+      return `<div class="sb-field">
+        <label style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:14px">📷</span> ${esc(f.label || f.key)}
+          <span style="font-size:10px;color:#52525b;background:#18181b;padding:1px 6px;border-radius:4px">${f.ratio || '9:16'}</span>
+        </label>
+        ${ref ? `
+          <div style="display:flex;gap:8px;align-items:flex-start;margin-top:6px">
+            <div style="position:relative;width:60px;flex-shrink:0">
+              <img src="${ref.previewUrl}" style="width:60px;border-radius:6px;border:1px solid #27272a">
+              <button onclick="removeRefImage('${tpl.code}','${f.key}')" style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;background:#f87171;border:none;border-radius:50%;color:#fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+              <input class="sb-input" id="ref-extra-${tpl.code}-${f.key}" placeholder="Thêm mô tả (tùy chọn)..." style="font-size:11px;padding:6px 8px" value="${esc(ref.extraPrompt || '')}">
+              <button onclick="genFromRef('${tpl.code}','${f.key}','${f.ratio || '9:16'}')" id="ref-btn-${tpl.code}-${f.key}"
+                style="padding:6px 12px;background:linear-gradient(135deg,#F06060,#f9a3a3);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">
+                ⚡ Gen ảnh mới
+              </button>
+              ${genResult ? `
+                <div style="display:flex;gap:6px;align-items:center;margin-top:4px">
+                  <img src="${genResult}" style="width:50px;border-radius:6px;border:1px solid rgba(74,222,128,.3)">
+                  <span style="font-size:10px;color:#4ade80">✓ Đã gen</span>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        ` : `
+          <div class="upload-zone" style="margin-top:4px;padding:12px">
+            <div class="upload-zone-label" style="font-size:11px">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#52525b" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Upload ảnh mẫu
+            </div>
+            <input type="file" accept="image/*" onchange="handleRefUpload(this,'${tpl.code}','${f.key}')">
+          </div>
+        `}
+      </div>`;
+    }).join('');
+  }
+
+  // Text fields — only in custom mode
+  let textHTML = '';
   if (mode !== 'custom') {
-    container.innerHTML = '<div style="font-size:12px;color:#3f3f46">AI will auto-generate text for this template.</div>';
-    return;
+    textHTML = '<div style="font-size:12px;color:#3f3f46">AI will auto-generate text for this template.</div>';
+  } else {
+    let tf = textFields.length ? textFields : [{ key: 'tagline', label: 'Tagline', type: 'tagline' }];
+    if (!customTextData[tpl.code]) customTextData[tpl.code] = {};
+    textHTML = tf.map(f => {
+      const val = customTextData[tpl.code][f.key] || '';
+      const placeholder = f.type === 'tagline' ? 'Enter tagline (Enter to break lines)' : 'Enter text...';
+      return `<div class="sb-field">
+        <label>${esc(f.label || f.key)}</label>
+        <textarea class="sb-input sb-textarea" data-code="${tpl.code}" data-key="${f.key}"
+          placeholder="${placeholder}" oninput="onCustomFieldInput(this)" rows="2" style="min-height:44px">${esc(val)}</textarea>
+      </div>`;
+    }).join('');
   }
 
-  const fields = dynFieldConfig[tpl.code];
-  let textFields = [];
-  if (fields) {
-    textFields = fields.filter(f => f.type === 'text' || f.type === 'tagline');
-  }
-  if (textFields.length === 0) {
-    textFields = [{ key: 'tagline', label: 'Tagline', type: 'tagline' }];
-  }
-
-  if (!customTextData[tpl.code]) customTextData[tpl.code] = {};
-
-  container.innerHTML = textFields.map(f => {
-    const val = customTextData[tpl.code][f.key] || '';
-    const placeholder = f.type === 'tagline' ? 'Enter tagline (Enter to break lines)' : 'Enter text...';
-    return `<div class="sb-field">
-      <label>${esc(f.label || f.key)}</label>
-      <textarea class="sb-input sb-textarea" data-code="${tpl.code}" data-key="${f.key}"
-        placeholder="${placeholder}" oninput="onCustomFieldInput(this)" rows="2" style="min-height:44px">${esc(val)}</textarea>
-    </div>`;
-  }).join('');
+  container.innerHTML = uploadHTML + refGenHTML + textHTML;
 }
 
 function onCustomFieldInput(el) {
@@ -518,6 +626,96 @@ function onCustomFieldInput(el) {
 
 function getCustomTextForTemplate(tplCode) {
   return customTextData[tplCode] || {};
+}
+
+async function handleUpload(input, tplCode, fieldKey) {
+  const file = input.files?.[0];
+  if (!file) return;
+  const formData = new FormData();
+  formData.append('file', file);
+  try {
+    const res = await fetch('/api/upload-asset', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (data.path) {
+      if (!uploadedFiles[tplCode]) uploadedFiles[tplCode] = {};
+      uploadedFiles[tplCode][fieldKey] = { path: data.path, previewUrl: URL.createObjectURL(file) };
+      renderCustomFields();
+    }
+  } catch (e) {
+    console.error('Upload failed:', e);
+  }
+}
+
+function removeUpload(tplCode, fieldKey) {
+  if (uploadedFiles[tplCode]) delete uploadedFiles[tplCode][fieldKey];
+  renderCustomFields();
+}
+
+// ===== REFERENCE IMAGE GENERATION =====
+async function handleRefUpload(input, tplCode, fieldKey) {
+  const file = input.files?.[0];
+  if (!file) return;
+  const formData = new FormData();
+  formData.append('file', file);
+  try {
+    const res = await fetch('/api/upload-asset', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (data.path) {
+      if (!refImages[tplCode]) refImages[tplCode] = {};
+      refImages[tplCode][fieldKey] = { path: data.path, previewUrl: URL.createObjectURL(file), extraPrompt: '' };
+      renderCustomFields();
+    }
+  } catch (e) {
+    console.error('Ref upload failed:', e);
+  }
+}
+
+function removeRefImage(tplCode, fieldKey) {
+  if (refImages[tplCode]) delete refImages[tplCode][fieldKey];
+  delete refGenResults[tplCode + '::' + fieldKey];
+  renderCustomFields();
+}
+
+async function genFromRef(tplCode, fieldKey, ratio) {
+  const ref = refImages[tplCode]?.[fieldKey];
+  if (!ref) return;
+
+  const extraInput = document.getElementById(`ref-extra-${tplCode}-${fieldKey}`);
+  const extraPrompt = extraInput?.value?.trim() || '';
+  ref.extraPrompt = extraPrompt;
+
+  const btn = document.getElementById(`ref-btn-${tplCode}-${fieldKey}`);
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Đang phân tích & gen...'; }
+
+  try {
+    const formData = new FormData();
+    // Re-fetch the file from server path
+    const resp = await fetch(`/${ref.path}`);
+    const blob = await resp.blob();
+    formData.append('ref_image', blob, 'ref.png');
+    formData.append('aspectRatio', ratio);
+    formData.append('extraPrompt', extraPrompt);
+
+    const res = await fetch('/api/gen-from-ref-image', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    refGenResults[tplCode + '::' + fieldKey] = data.url;
+
+    // Also set it as the uploaded file so batch generation uses it
+    if (!uploadedFiles[tplCode]) uploadedFiles[tplCode] = {};
+    uploadedFiles[tplCode][fieldKey] = { path: data.url.replace(/^\/api\/cache\//, 'assets/cache/'), previewUrl: data.url };
+
+    renderCustomFields();
+    // Refresh preview
+    const idx = templates.findIndex(t => t.code === tplCode);
+    if (idx >= 0) loadPreview(idx);
+  } catch (err) {
+    console.error('Gen from ref failed:', err);
+    alert('Gen thất bại: ' + err.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '⚡ Gen ảnh mới'; }
+  }
 }
 
 // ===== GLOBAL COLOR =====
@@ -671,12 +869,18 @@ async function generateAll() {
 
   for (const tpl of templates) {
     try {
+      // Build uploaded_files map: { fieldKey: serverPath }
+      const tplUploads = uploadedFiles[tpl.code] || {};
+      const uploadedFilesMap = {};
+      Object.entries(tplUploads).forEach(([k, v]) => { if (v.path) uploadedFilesMap[k] = v.path; });
+
       const values = {
         accent_start: document.getElementById('g-accent-start').value,
         accent_end: document.getElementById('g-accent-end').value,
         font: selectedFont,
         tagline_mode: getTplMode(tpl.code),
         custom_text: getTplMode(tpl.code) === 'custom' ? getCustomTextForTemplate(tpl.code) : {},
+        uploaded_files: uploadedFilesMap,
       };
       const res = await fetch('/api/gen-batch', {
         method: 'POST',
@@ -684,7 +888,7 @@ async function generateAll() {
         body: JSON.stringify({ languages: langs, values, templateCode: tpl.code, featureName: tpl.featureName || '' })
       });
       const data = await res.json();
-      await pollBatchUntilDone(data.batchId, tpl.name);
+      await pollBatchUntilDone(data.batchId, tpl.name, tpl.code, tpl.featureName || '', values);
     } catch (e) {
       console.error('Generate error:', e);
     }
@@ -701,7 +905,7 @@ async function generateAll() {
   document.getElementById('btn-download-all').style.display = '';
 }
 
-function pollBatchUntilDone(batchId, tplName) {
+function pollBatchUntilDone(batchId, tplName, templateCode, featureName, values) {
   return new Promise((resolve) => {
     const timer = setInterval(async () => {
       try {
@@ -713,7 +917,7 @@ function pollBatchUntilDone(batchId, tplName) {
             const r = genResults[job.code];
             if (r && !r.files.some(f => f.url === job.url)) {
               const filename = job.url.split('/').pop();
-              r.files.push({ url: job.url, filename, tplName });
+              r.files.push({ url: job.url, filename, tplName, batchId, templateCode, featureName, values, langCode: job.code });
               updateResultRow(job.code);
             }
           }
@@ -771,10 +975,16 @@ function updateResultRow(langCode) {
   document.getElementById('gen-count-' + langCode).textContent = r.files.length + ' file' + (r.files.length !== 1 ? 's' : '');
 
   const thumbs = document.getElementById('gen-thumbs-' + langCode);
-  thumbs.innerHTML = r.files.map(f => `
-    <a class="gen-thumb" href="${f.url}" target="_blank" title="${esc(f.tplName)}">
-      <img src="${f.url}" loading="lazy">
-    </a>
+  thumbs.innerHTML = r.files.map((f, idx) => `
+    <div class="gen-thumb-wrap" id="gthumb-${langCode}-${idx}">
+      <a class="gen-thumb" href="${f.url}" target="_blank" title="${esc(f.tplName)}">
+        <img src="${f.url}?v=${Date.now()}" loading="lazy">
+      </a>
+      <button class="retry-btn" onclick="event.stopPropagation();openRetryMenu('${langCode}',${idx})" title="Retry">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+      </button>
+      <div class="retry-menu hidden" id="retry-menu-${langCode}-${idx}"></div>
+    </div>
   `).join('');
 
   const dlBtn = document.getElementById('gen-dl-' + langCode);
@@ -838,6 +1048,191 @@ function downloadAll() {
   if (!allFiles.length) return;
   downloadZip(allFiles, 'screenshots_all.zip', folders);
 }
+
+// ===== RETRY =====
+let _retryChecked = {}; // { "langCode-idx": Set of checked parts }
+
+async function openRetryMenu(langCode, idx) {
+  const menuId = `retry-menu-${langCode}-${idx}`;
+  const menu = document.getElementById(menuId);
+  if (!menu) return;
+
+  // Toggle: if already open, close it
+  if (!menu.classList.contains('hidden')) {
+    menu.classList.add('hidden');
+    return;
+  }
+
+  // Close all other menus
+  document.querySelectorAll('.retry-menu').forEach(m => m.classList.add('hidden'));
+
+  const f = genResults[langCode]?.files[idx];
+  if (!f) return;
+
+  // Fetch image slots from server
+  let imageSlots = [];
+  try {
+    const res = await fetch(`/api/batch/${f.batchId}/assets/${f.langCode}`);
+    if (res.ok) {
+      const data = await res.json();
+      imageSlots = data.imageSlots || [];
+    }
+  } catch {}
+
+  const key = `${langCode}-${idx}`;
+  if (!_retryChecked[key]) _retryChecked[key] = new Set();
+
+  const slotLabels = {
+    img1: 'Image 1', main_image: 'Main Image', circle_image: 'Circle Image',
+    image_1: 'Image 1', image_2: 'Image 2', image_3: 'Image 3', image_4: 'Image 4',
+    before_image: 'Before Image', after_image: 'After Image',
+  };
+
+  let html = `<div class="retry-title">Retry parts</div>`;
+  html += `<div class="retry-option ${_retryChecked[key].has('tagline')?'checked':''}" onclick="toggleRetryPart('${langCode}',${idx},'tagline',this)">
+    <span class="ri-check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+    Text / Tagline
+  </div>`;
+
+  if (imageSlots.length) {
+    html += `<div class="retry-sep"></div>`;
+    imageSlots.forEach(slot => {
+      const label = slotLabels[slot] || slot.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      html += `<div class="retry-option ${_retryChecked[key].has(slot)?'checked':''}" onclick="toggleRetryPart('${langCode}',${idx},'${slot}',this)">
+        <span class="ri-check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+        ${esc(label)}
+      </div>`;
+    });
+  }
+
+  html += `<div class="retry-sep"></div>`;
+  html += `<div class="retry-option ${_retryChecked[key].has('all')?'checked':''}" onclick="toggleRetryAll('${langCode}',${idx},this)">
+    <span class="ri-check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+    Retry All
+  </div>`;
+  html += `<button class="retry-go" id="retry-go-${langCode}-${idx}" onclick="doRetry('${langCode}',${idx})">Retry Selected</button>`;
+
+  menu.innerHTML = html;
+  menu.classList.remove('hidden');
+}
+
+function toggleRetryPart(langCode, idx, part, el) {
+  const key = `${langCode}-${idx}`;
+  if (!_retryChecked[key]) _retryChecked[key] = new Set();
+  // Uncheck "all" when picking individual parts
+  _retryChecked[key].delete('all');
+  const menu = document.getElementById(`retry-menu-${langCode}-${idx}`);
+  if (menu) menu.querySelector('.retry-option:last-of-type')?.classList.remove('checked');
+
+  if (_retryChecked[key].has(part)) {
+    _retryChecked[key].delete(part);
+    el.classList.remove('checked');
+  } else {
+    _retryChecked[key].add(part);
+    el.classList.add('checked');
+  }
+}
+
+function toggleRetryAll(langCode, idx, el) {
+  const key = `${langCode}-${idx}`;
+  _retryChecked[key] = new Set();
+  // Uncheck all individual options
+  const menu = document.getElementById(`retry-menu-${langCode}-${idx}`);
+  menu.querySelectorAll('.retry-option').forEach(o => o.classList.remove('checked'));
+
+  // Toggle "all"
+  _retryChecked[key].add('all');
+  el.classList.add('checked');
+}
+
+async function doRetry(langCode, idx) {
+  const key = `${langCode}-${idx}`;
+  const parts = _retryChecked[key];
+  if (!parts || parts.size === 0) return;
+
+  const f = genResults[langCode]?.files[idx];
+  if (!f) return;
+
+  const goBtn = document.getElementById(`retry-go-${langCode}-${idx}`);
+  if (goBtn) { goBtn.disabled = true; goBtn.textContent = 'Retrying...'; }
+
+  // Show spinner on the thumbnail
+  const wrap = document.getElementById(`gthumb-${langCode}-${idx}`);
+  const retryBtn = wrap?.querySelector('.retry-btn');
+  if (retryBtn) { retryBtn.innerHTML = `<svg class="retry-spinning" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg>`; retryBtn.style.opacity = '1'; }
+
+  // Close menu
+  const menu = document.getElementById(`retry-menu-${langCode}-${idx}`);
+  if (menu) menu.classList.add('hidden');
+
+  try {
+    const res = await fetch('/api/gen-retry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        batchId: f.batchId,
+        langCode: f.langCode,
+        retryParts: [...parts],
+        values: f.values,
+        templateCode: f.templateCode,
+        featureName: f.featureName,
+      })
+    });
+    const data = await res.json();
+    if (data.batchId) {
+      // Poll for retry result
+      await pollRetryResult(data.batchId, langCode, idx, f);
+    }
+  } catch (err) {
+    console.error('Retry failed:', err);
+  }
+
+  // Reset retry btn
+  if (retryBtn) {
+    retryBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`;
+    retryBtn.style.opacity = '';
+  }
+  _retryChecked[key] = new Set();
+}
+
+function pollRetryResult(retryBatchId, langCode, fileIdx, origFile) {
+  return new Promise((resolve) => {
+    const timer = setInterval(async () => {
+      try {
+        const res = await fetch('/api/batch/' + retryBatchId);
+        const batch = await res.json();
+        const job = batch.jobs[0];
+
+        if (job?.status === 'completed' && job.url) {
+          // Replace the old file in genResults
+          const r = genResults[langCode];
+          if (r && r.files[fileIdx]) {
+            r.files[fileIdx] = {
+              ...r.files[fileIdx],
+              url: job.url,
+              filename: job.url.split('/').pop(),
+              batchId: retryBatchId,
+            };
+            updateResultRow(langCode);
+          }
+          clearInterval(timer);
+          resolve();
+        } else if (batch.status === 'completed') {
+          // Failed
+          clearInterval(timer);
+          resolve();
+        }
+      } catch { clearInterval(timer); resolve(); }
+    }, 2000);
+  });
+}
+
+// Close retry menus on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('.retry-menu') && !e.target.closest('.retry-btn')) {
+    document.querySelectorAll('.retry-menu').forEach(m => m.classList.add('hidden'));
+  }
+});
 
 // ===== UTILS =====
 function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }

@@ -138,23 +138,43 @@ router.post('/upload-template', upload.fields([
   // Auto-detect fields
   let finalHtml = htmlContent;
   let autoFields = [];
-  const existingVars = [...htmlContent.matchAll(/\{\{(\w+)\}\}/g)].map(m => m[1]);
+  const existingVars = [...new Set([...htmlContent.matchAll(/\{\{(\w+)\}\}/g)].map(m => m[1]))];
 
   if (existingVars.length === 0) {
+    // No placeholders found — auto-detect from HTML content
     const result = autoDetectFields(htmlContent);
     finalHtml = result.finalHtml;
     autoFields = result.autoFields;
     writeFileSync(join(tplDir, 'layout.html'), finalHtml, 'utf-8');
-
-    if (autoFields.length > 0) {
-      const fc2 = loadFields();
-      fc2[code] = autoFields;
-      saveFields(fc2);
-    }
+  } else {
+    // Template already has placeholders — build field config from them
+    autoFields = existingVars.map(key => {
+      if (key.startsWith('image_') || key.includes('img')) {
+        return { key, type: 'image', label: key.replace(/_/g, ' '), ratio: '9:16' };
+      }
+      if (key.startsWith('text_') || key === 'tagline' || key === 'title_line1' || key === 'title_line2') {
+        return { key, type: 'text', label: key.replace(/_/g, ' ') };
+      }
+      if (key === 'description') {
+        return { key, type: 'text', label: 'Description' };
+      }
+      if (key === 'background') {
+        return { key, type: 'color', label: 'Background Color' };
+      }
+      // Default: treat as text
+      return { key, type: 'text', label: key.replace(/_/g, ' ') };
+    });
   }
 
-  const finalVars = [...finalHtml.matchAll(/\{\{(\w+)\}\}/g)].map(m => m[1]);
-  res.json({ ok: true, code, fields: [...new Set(finalVars)], autoFields });
+  // Save field config
+  if (autoFields.length > 0) {
+    const fc2 = loadFields();
+    fc2[code] = autoFields;
+    saveFields(fc2);
+  }
+
+  const finalVars = [...new Set([...finalHtml.matchAll(/\{\{(\w+)\}\}/g)].map(m => m[1]))];
+  res.json({ ok: true, code, fields: finalVars, autoFields });
 });
 
 // GET /api/scan-template/:code
