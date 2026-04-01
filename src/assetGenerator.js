@@ -1,12 +1,10 @@
 // ESM module — GEMINI API VERSION
 import { GoogleGenAI } from '@google/genai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import Anthropic from '@anthropic-ai/sdk';
 import { getFromCache, saveToCache } from './cache.js';
 
 const genAI   = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const genAIv2 = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) : null;
 
 async function retryWithBackoff(fn, maxRetries = 2) {
   for (let i = 0; i <= maxRetries; i++) {
@@ -41,16 +39,6 @@ export async function generateImage(prompt, aspectRatio = '9:16') {
 }
 
 export async function generateText(prompt) {
-  if (anthropic) {
-    return retryWithBackoff(async () => {
-      const result = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
-        messages: [{ role: 'user', content: prompt }],
-      });
-      return result.content[0].text.trim();
-    });
-  }
   return retryWithBackoff(async () => {
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
@@ -66,23 +54,6 @@ export async function describeFace(imagePath) {
   const imageBuffer = readFileSync(imagePath);
   const base64 = imageBuffer.toString('base64');
   const facePrompt = 'Describe this person\'s facial features in detail for image generation purposes: face shape, skin tone, eye shape and color, nose shape, lip shape, eyebrow shape, hair color and style, approximate age range. Be precise and concise. Output ONLY the physical description, no intro or commentary.';
-
-  if (anthropic) {
-    return retryWithBackoff(async () => {
-      const result = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: 'image/png', data: base64 } },
-            { type: 'text', text: facePrompt },
-          ],
-        }],
-      });
-      return result.content[0].text.trim();
-    });
-  }
 
   return retryWithBackoff(async () => {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
@@ -167,27 +138,6 @@ Rules:
 - If there are before/after images, describe each separately
 - tagline should be the main headline text only
 - num_images = total count of photos`;
-
-  if (anthropic) {
-    return retryWithBackoff(async () => {
-      console.log('[claude-vision] analyzing template image...');
-      const result = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 4096,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
-            { type: 'text', text: prompt },
-          ],
-        }],
-      });
-      let text = result.content[0].text.trim();
-      text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-      console.log(`[claude-vision] extracted: ${text.slice(0, 300)}`);
-      return JSON.parse(text);
-    });
-  }
 
   return retryWithBackoff(async () => {
     console.log('[gemini-vision] analyzing template image...');
@@ -451,38 +401,11 @@ The HTML must follow this structure:
 </body>
 </html>`;
 
-  // Use Claude Vision if available, otherwise fall back to Gemini
-  if (anthropic) {
-    return retryWithBackoff(async () => {
-      console.log('[claude-vision] analyzing template layout from image...');
-      const result = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 16000,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
-            { type: 'text', text: prompt },
-          ],
-        }],
-      });
-      let html = result.content[0].text.trim();
-      html = html.replace(/^```(?:html)?\s*/i, '').replace(/\s*```$/, '');
-      console.log(`[claude-vision] generated HTML layout (${html.length} chars)`);
-      return html;
-    });
-  }
-
   return retryWithBackoff(async () => {
     console.log('[gemini-vision] analyzing template layout from image...');
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     const result = await model.generateContent([
-      {
-        inlineData: {
-          mimeType: 'image/jpeg',
-          data: base64,
-        },
-      },
+      { inlineData: { mimeType: 'image/jpeg', data: base64 } },
       prompt,
     ]);
     let html = result.response.text().trim();
