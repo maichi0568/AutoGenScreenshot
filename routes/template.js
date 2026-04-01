@@ -4,6 +4,20 @@ import { fileURLToPath } from 'url';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import multer from 'multer';
 import { loadFields, saveFields, loadPrompts, savePrompts } from '../utils/configManager.js';
+import { analyzeTemplateLayout, fetchFigmaImage } from '../src/assetGenerator.js';
+
+// Detect field type from placeholder key name
+function detectFieldType(key) {
+  const k = key.toLowerCase();
+  if (k.includes('image') || k.includes('img') || k.includes('photo') || k.includes('picture')) {
+    return { key, type: 'image', label: key.replace(/_/g, ' '), ratio: '9:16' };
+  }
+  if (k.includes('background') || k.includes('bg') || k.includes('color')) {
+    return { key, type: 'color', label: key.replace(/_/g, ' ') };
+  }
+  // Everything else is text
+  return { key, type: 'text', label: key.replace(/_/g, ' ') };
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const upload = multer({ dest: 'uploads/' });
@@ -216,6 +230,81 @@ router.post('/apply-placeholders/:code', (req, res) => {
 
   writeFileSync(layoutPath, html, 'utf-8');
   res.json({ ok: true });
+});
+
+// POST /api/upload-template-image — upload an image, AI generates layout
+router.post('/upload-template-image', upload.single('image'), async (req, res) => {
+  const code = (req.body.code || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  if (!code) return res.status(400).json({ error: 'Template code is required' });
+  if (!req.file) return res.status(400).json({ error: 'Image file is required' });
+
+  try {
+    console.log(`[upload-tpl-image] Analyzing image for template "${code}"...`);
+    const htmlContent = await analyzeTemplateLayout(req.file.path);
+
+    const tplDir = join(__dirname, '..', 'templates', code);
+    if (!existsSync(tplDir)) mkdirSync(tplDir, { recursive: true });
+    writeFileSync(join(tplDir, 'layout.html'), htmlContent, 'utf-8');
+
+    // Clear old config
+    const fc = loadFields();
+    delete fc[code];
+    saveFields(fc);
+
+    const pc = loadPrompts();
+    delete pc[code];
+    savePrompts(pc);
+
+    const placeholders = [...new Set([...htmlContent.matchAll(/\{\{(\w+)\}\}/g)].map(m => m[1]))];
+    const autoFields = placeholders.map(detectFieldType);
+    if (autoFields.length > 0) { const fc2 = loadFields(); fc2[code] = autoFields; saveFields(fc2); }
+
+    console.log(`[upload-tpl-image] Template "${code}" created with ${autoFields.length} fields`);
+    res.json({ ok: true, code, fields: placeholders, autoFields });
+  } catch (err) {
+    console.error('[upload-tpl-image] Error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/import-figma — import template from Figma URL
+router.post('/import-figma', async (req, res) => {
+  const code = (req.body.code || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  const figmaUrl = (req.body.figma_url || '').trim();
+  if (!code) return res.status(400).json({ error: 'Template code is required' });
+  if (!figmaUrl) return res.status(400).json({ error: 'Figma URL is required' });
+
+  try {
+    console.log(`[import-figma] Fetching design from Figma...`);
+    const { imagePath, layers } = await fetchFigmaImage(figmaUrl);
+
+    console.log(`[import-figma] Analyzing layout with AI... (${layers.length} layers detected)`);
+    const htmlContent = await analyzeTemplateLayout(imagePath, layers);
+
+    const tplDir = join(__dirname, '..', 'templates', code);
+    if (!existsSync(tplDir)) mkdirSync(tplDir, { recursive: true });
+    writeFileSync(join(tplDir, 'layout.html'), htmlContent, 'utf-8');
+
+    // Clear old config
+    const fc = loadFields();
+    delete fc[code];
+    saveFields(fc);
+    const pc = loadPrompts();
+    delete pc[code];
+    savePrompts(pc);
+
+    const placeholders = [...new Set([...htmlContent.matchAll(/\{\{(\w+)\}\}/g)].map(m => m[1]))];
+    const autoFields = placeholders.map(detectFieldType);
+    if (autoFields.length > 0) { const fc2 = loadFields(); fc2[code] = autoFields; saveFields(fc2); }
+
+    try { (await import('fs')).unlinkSync(imagePath); } catch {}
+
+    console.log(`[import-figma] Template "${code}" created with ${autoFields.length} fields`);
+    res.json({ ok: true, code, fields: placeholders, autoFields });
+  } catch (err) {
+    console.error('[import-figma] Error:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 export default router;

@@ -1,10 +1,12 @@
 // ESM module — GEMINI API VERSION
 import { GoogleGenAI } from '@google/genai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import Anthropic from '@anthropic-ai/sdk';
 import { getFromCache, saveToCache } from './cache.js';
 
 const genAI   = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const genAIv2 = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) : null;
 
 async function retryWithBackoff(fn, maxRetries = 2) {
   for (let i = 0; i <= maxRetries; i++) {
@@ -39,6 +41,16 @@ export async function generateImage(prompt, aspectRatio = '9:16') {
 }
 
 export async function generateText(prompt) {
+  if (anthropic) {
+    return retryWithBackoff(async () => {
+      const result = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: prompt }],
+      });
+      return result.content[0].text.trim();
+    });
+  }
   return retryWithBackoff(async () => {
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
@@ -53,17 +65,30 @@ export async function describeFace(imagePath) {
   const { readFileSync } = await import('fs');
   const imageBuffer = readFileSync(imagePath);
   const base64 = imageBuffer.toString('base64');
+  const facePrompt = 'Describe this person\'s facial features in detail for image generation purposes: face shape, skin tone, eye shape and color, nose shape, lip shape, eyebrow shape, hair color and style, approximate age range. Be precise and concise. Output ONLY the physical description, no intro or commentary.';
+
+  if (anthropic) {
+    return retryWithBackoff(async () => {
+      const result = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1024,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: 'image/png', data: base64 } },
+            { type: 'text', text: facePrompt },
+          ],
+        }],
+      });
+      return result.content[0].text.trim();
+    });
+  }
 
   return retryWithBackoff(async () => {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     const result = await model.generateContent([
-      {
-        inlineData: {
-          mimeType: 'image/png',
-          data: base64,
-        },
-      },
-      'Describe this person\'s facial features in detail for image generation purposes: face shape, skin tone, eye shape and color, nose shape, lip shape, eyebrow shape, hair color and style, approximate age range. Be precise and concise. Output ONLY the physical description, no intro or commentary.',
+      { inlineData: { mimeType: 'image/png', data: base64 } },
+      facePrompt,
     ]);
     return result.response.text().trim();
   });
@@ -143,22 +168,37 @@ Rules:
 - tagline should be the main headline text only
 - num_images = total count of photos`;
 
+  if (anthropic) {
+    return retryWithBackoff(async () => {
+      console.log('[claude-vision] analyzing template image...');
+      const result = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4096,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
+            { type: 'text', text: prompt },
+          ],
+        }],
+      });
+      let text = result.content[0].text.trim();
+      text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+      console.log(`[claude-vision] extracted: ${text.slice(0, 300)}`);
+      return JSON.parse(text);
+    });
+  }
+
   return retryWithBackoff(async () => {
-    console.log('[vision] analyzing template image...');
+    console.log('[gemini-vision] analyzing template image...');
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     const result = await model.generateContent([
-      {
-        inlineData: {
-          mimeType: 'image/jpeg',
-          data: base64,
-        },
-      },
+      { inlineData: { mimeType: 'image/jpeg', data: base64 } },
       prompt,
     ]);
     let text = result.response.text().trim();
-    // Strip markdown code block if present
     text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-    console.log(`[vision] extracted: ${text.slice(0, 300)}`);
+    console.log(`[gemini-vision] extracted: ${text.slice(0, 300)}`);
     return JSON.parse(text);
   });
 }
@@ -190,6 +230,266 @@ export async function generateFromReference(refImagePath, aspectRatio = '9:16', 
     images: imageResults,
     background_color: analysis.background_color,
   };
+}
+
+// Parse Figma URL into fileKey and nodeId
+function parseFigmaUrl(figmaUrl) {
+  const urlObj = new URL(figmaUrl);
+  const pathParts = urlObj.pathname.split('/').filter(Boolean);
+
+  let fileKey = null;
+  for (let i = 0; i < pathParts.length; i++) {
+    if (pathParts[i] === 'design' || pathParts[i] === 'file') {
+      fileKey = pathParts[i + 1];
+      break;
+    }
+    if (pathParts[i] === 'branch') {
+      fileKey = pathParts[i + 1];
+      break;
+    }
+  }
+  if (!fileKey) throw new Error('Cannot parse Figma file key from URL');
+
+  let nodeId = urlObj.searchParams.get('node-id');
+  if (nodeId) nodeId = nodeId.replace(/-/g, ':');
+
+  return { fileKey, nodeId };
+}
+
+// Recursively extract layer names and types from Figma node tree
+function extractLayers(node, layers = [], depth = 0) {
+  if (!node) return layers;
+
+  const name = (node.name || '').trim();
+  const type = node.type; // FRAME, TEXT, RECTANGLE, IMAGE, GROUP, etc.
+
+  if (depth > 0 && name) {
+    const info = {
+      name,
+      type,
+      id: node.id,
+    };
+
+    // Get bounding box if available
+    if (node.absoluteBoundingBox) {
+      info.x = Math.round(node.absoluteBoundingBox.x);
+      info.y = Math.round(node.absoluteBoundingBox.y);
+      info.width = Math.round(node.absoluteBoundingBox.width);
+      info.height = Math.round(node.absoluteBoundingBox.height);
+    }
+
+    // Detect fills for color info
+    if (node.fills?.length > 0) {
+      const fill = node.fills[0];
+      if (fill.type === 'SOLID' && fill.color) {
+        const r = Math.round(fill.color.r * 255);
+        const g = Math.round(fill.color.g * 255);
+        const b = Math.round(fill.color.b * 255);
+        info.color = `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+      }
+    }
+
+    // Text content
+    if (type === 'TEXT' && node.characters) {
+      info.text = node.characters;
+      if (node.style) {
+        info.fontSize = node.style.fontSize;
+        info.fontWeight = node.style.fontWeight;
+      }
+    }
+
+    layers.push(info);
+  }
+
+  // Recurse children
+  if (node.children) {
+    for (const child of node.children) {
+      extractLayers(child, layers, depth + 1);
+    }
+  }
+
+  return layers;
+}
+
+// Fetch Figma frame as PNG + extract layer info
+export async function fetchFigmaImage(figmaUrl) {
+  const { writeFileSync } = await import('fs');
+  const { join } = await import('path');
+
+  const { fileKey, nodeId } = parseFigmaUrl(figmaUrl);
+  const token = process.env.FIGMA_TOKEN;
+  if (!token) throw new Error('FIGMA_TOKEN not set in environment');
+
+  // Fetch node tree and image in parallel
+  const ids = nodeId || '';
+  const [nodesRes, imgRes] = await Promise.all([
+    fetch(`https://api.figma.com/v1/files/${fileKey}/nodes?ids=${encodeURIComponent(ids)}`, {
+      headers: { 'X-Figma-Token': token }
+    }),
+    fetch(`https://api.figma.com/v1/images/${fileKey}?ids=${encodeURIComponent(ids)}&format=png&scale=2`, {
+      headers: { 'X-Figma-Token': token }
+    }),
+  ]);
+
+  // Extract layers from node tree
+  let layers = [];
+  if (nodesRes.ok) {
+    const nodesData = await nodesRes.json();
+    const nodes = nodesData.nodes || {};
+    const rootNode = Object.values(nodes)[0]?.document;
+    if (rootNode) {
+      layers = extractLayers(rootNode);
+      console.log(`[figma] Found ${layers.length} layers:`, layers.map(l => `${l.name} (${l.type})`).join(', '));
+    }
+  }
+
+  // Download image
+  if (!imgRes.ok) {
+    const errText = await imgRes.text();
+    throw new Error(`Figma API error ${imgRes.status}: ${errText}`);
+  }
+  const imgData = await imgRes.json();
+  const imgUrl = Object.values(imgData.images || {})[0];
+  if (!imgUrl) throw new Error('No image returned from Figma API. Make sure the node-id is correct.');
+
+  console.log(`[figma] Downloading PNG...`);
+  const pngRes = await fetch(imgUrl);
+  if (!pngRes.ok) throw new Error(`Failed to download Figma image: ${pngRes.status}`);
+  const buffer = Buffer.from(await pngRes.arrayBuffer());
+
+  const tempPath = join('uploads', `figma_${Date.now()}.png`);
+  writeFileSync(tempPath, buffer);
+  console.log(`[figma] Saved to ${tempPath} (${buffer.length} bytes)`);
+
+  return { imagePath: tempPath, layers };
+}
+
+// Analyze a template image and generate full HTML/CSS layout
+// layers: optional array of Figma layer info [{name, type, x, y, width, height, color, text, fontSize, fontWeight}]
+export async function analyzeTemplateLayout(imagePath, layers = []) {
+  const { readFileSync } = await import('fs');
+  const sharp = (await import('sharp')).default;
+
+  let imageBuffer;
+  try {
+    imageBuffer = await sharp(imagePath)
+      .resize(1500, 1500, { fit: 'inside', withoutEnlargement: true })
+      .jpeg({ quality: 85 })
+      .toBuffer();
+  } catch {
+    imageBuffer = readFileSync(imagePath);
+  }
+  const base64 = imageBuffer.toString('base64');
+
+  // Build layer mapping instructions if layers are provided
+  let layerInstructions = '';
+  if (layers.length > 0) {
+    const layerList = layers.map(l => {
+      let desc = `- "${l.name}" (${l.type})`;
+      if (l.width && l.height) desc += ` — ${l.width}x${l.height}px at (${l.x}, ${l.y})`;
+      if (l.color) desc += ` — color: ${l.color}`;
+      if (l.text) desc += ` — text: "${l.text}"`;
+      if (l.fontSize) desc += ` — fontSize: ${l.fontSize}`;
+      return desc;
+    }).join('\n');
+
+    layerInstructions = `
+IMPORTANT — Figma Layer Names:
+The designer has named the layers in Figma. Use these EXACT names as {{placeholder}} keys:
+${layerList}
+
+Mapping rules:
+- Layer names containing "image", "img", "photo", "picture" or layer type is IMAGE/RECTANGLE with image fill → use as <img src="{{layer_name}}">
+- Layer names containing "tagline", "title", "heading", "text" or type is TEXT → use as {{layer_name}} in a text element
+- Layer names containing "description", "desc", "subtitle", "caption" → use as {{layer_name}} in a text element
+- Layer names containing "background", "bg" → use the layer name for background color placeholder
+- For other named layers, use the layer name as-is for the placeholder key: {{layer_name}}
+- Convert layer names to snake_case for placeholder keys (e.g. "Main Image" → {{main_image}}, "tagline" → {{tagline}})
+- Use the layer positions (x, y, width, height) to place elements accurately with absolute positioning
+- Decorative layers (stars, arrows, shapes without meaningful names) should be reproduced as CSS/SVG, not as placeholders
+`;
+  }
+
+  const prompt = `You are an expert UI developer. Analyze this app store screenshot template image and generate a FULL HTML page that recreates this layout precisely.
+
+The template is 1080x1920 pixels. You must generate complete, working HTML with inline CSS that matches the layout.
+${layerInstructions}
+RULES:
+1. Use absolute positioning for ALL elements inside the main container (.template-bg)
+2. The main container must be exactly 1080px × 1920px with position:relative
+3. For each PHOTO/IMAGE area, use an <img> tag with src="{{key}}" where key comes from the layer name${layers.length === 0 ? ' (use image_1, image_2, etc.)' : ''}
+4. For headline/tagline text, use a <p> tag containing {{key}}${layers.length === 0 ? ' (use text_1)' : ''}
+5. For subtitle/description text, use a <p> tag containing {{key}}${layers.length === 0 ? ' (use description)' : ''}
+6. Reproduce decorative elements (shapes, gradients, overlays) using CSS or simple SVG
+7. Match colors, border-radius, shadows, gradients as closely as possible
+8. Use 'Poppins' as the font family
+9. Include the Google Fonts import for Poppins (weights 400 and 800)
+10. Do NOT use external images - only {{placeholders}} or CSS/SVG for decorations
+11. Make sure image containers have overflow:hidden and img tags have object-fit:cover
+12. Background can be a solid color or gradient matching the original
+
+Return ONLY the complete HTML document (<!DOCTYPE html> to </html>). No markdown, no code blocks, no explanation.
+
+The HTML must follow this structure:
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Template</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;800&display=swap');
+    html, body { height:100%; margin:0; padding:0; box-sizing:border-box; }
+    body { background:#000; min-height:1920px; min-width:1080px; overflow-x:auto; }
+    .template-bg { position:relative; width:1080px; height:1920px; overflow:hidden; margin:0 auto; font-family:'Poppins',Arial,sans-serif; /* background here */ }
+    /* ... all element styles with absolute positioning ... */
+  </style>
+</head>
+<body>
+  <div class="template-bg">
+    <!-- elements here -->
+  </div>
+</body>
+</html>`;
+
+  // Use Claude Vision if available, otherwise fall back to Gemini
+  if (anthropic) {
+    return retryWithBackoff(async () => {
+      console.log('[claude-vision] analyzing template layout from image...');
+      const result = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 16000,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
+            { type: 'text', text: prompt },
+          ],
+        }],
+      });
+      let html = result.content[0].text.trim();
+      html = html.replace(/^```(?:html)?\s*/i, '').replace(/\s*```$/, '');
+      console.log(`[claude-vision] generated HTML layout (${html.length} chars)`);
+      return html;
+    });
+  }
+
+  return retryWithBackoff(async () => {
+    console.log('[gemini-vision] analyzing template layout from image...');
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          mimeType: 'image/jpeg',
+          data: base64,
+        },
+      },
+      prompt,
+    ]);
+    let html = result.response.text().trim();
+    html = html.replace(/^```(?:html)?\s*/i, '').replace(/\s*```$/, '');
+    console.log(`[gemini-vision] generated HTML layout (${html.length} chars)`);
+    return html;
+  });
 }
 
 export function generateSolidColor(hexColor) {

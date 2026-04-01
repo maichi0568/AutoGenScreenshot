@@ -1024,7 +1024,9 @@ function showAddTemplate(gid, fid) {
   openModal('Add Template', `
     <div style="display:flex;gap:8px;margin-bottom:14px">
       <button class="modal-btn modal-cancel" id="m-tab-existing" onclick="switchTplTab('existing')" style="flex:1;font-weight:700;background:rgba(240,96,96,.15);color:#F9A3A3">Existing</button>
-      <button class="modal-btn modal-cancel" id="m-tab-upload" onclick="switchTplTab('upload')" style="flex:1">Upload New</button>
+      <button class="modal-btn modal-cancel" id="m-tab-upload" onclick="switchTplTab('upload')" style="flex:1">Upload HTML</button>
+      <button class="modal-btn modal-cancel" id="m-tab-image" onclick="switchTplTab('image')" style="flex:1">Upload Image</button>
+      <button class="modal-btn modal-cancel" id="m-tab-figma" onclick="switchTplTab('figma')" style="flex:1">Figma</button>
     </div>
     <div id="m-tpl-existing">
       <div class="modal-field"><label>Template</label><select id="m-tpl-code">${existingOpts}</select></div>
@@ -1038,19 +1040,42 @@ function showAddTemplate(gid, fid) {
       <div class="modal-field"><label>CSS File (optional)</label><input type="file" id="m-up-css" accept=".css"></div>
       <div class="modal-field"><label>Size</label><input id="m-up-size" value="1080x1920"></div>
     </div>
+    <div id="m-tpl-image" style="display:none">
+      <div class="modal-field"><label>Template Code</label><input id="m-img-code" placeholder="e.g. my_template (a-z, 0-9, _)"></div>
+      <div class="modal-field"><label>Display Name</label><input id="m-img-name" placeholder="e.g. My Template"></div>
+      <div class="modal-field">
+        <label>Template Image</label>
+        <div class="upload-zone" id="m-img-zone" onclick="document.getElementById('m-img-file').click()">
+          Click to upload template screenshot (PNG, JPG)
+          <input type="file" id="m-img-file" accept="image/*" style="display:none" onchange="onImgFileChange(this)">
+        </div>
+      </div>
+      <div id="m-img-preview" style="margin-top:8px"></div>
+      <div class="modal-field"><label>Size</label><input id="m-img-size" value="1080x1920"></div>
+    </div>
+    <div id="m-tpl-figma" style="display:none">
+      <div class="modal-field"><label>Figma URL</label><input id="m-figma-url" placeholder="https://www.figma.com/design/xxxxx/...?node-id=1-2"></div>
+      <div style="font-size:11px;color:#52525b;margin:-8px 0 12px;line-height:1.5">Paste link Figma frame. AI se tu detect layout va tao template HTML/CSS.</div>
+      <div class="modal-field"><label>Template Code</label><input id="m-figma-code" placeholder="e.g. my_template (a-z, 0-9, _)"></div>
+      <div class="modal-field"><label>Display Name</label><input id="m-figma-name" placeholder="e.g. My Template"></div>
+      <div class="modal-field"><label>Size</label><input id="m-figma-size" value="1080x1920"></div>
+      <div id="m-figma-status" style="margin-top:8px"></div>
+    </div>
   `, 'Add', async () => {
-    const tab = document.getElementById('m-tpl-upload').style.display === 'none' ? 'existing' : 'upload';
+    const activeTab = document.getElementById('m-tpl-figma')?.style.display !== 'none' ? 'figma'
+      : document.getElementById('m-tpl-image')?.style.display !== 'none' ? 'image'
+      : document.getElementById('m-tpl-upload').style.display !== 'none' ? 'upload' : 'existing';
     const group = DATA.find(g => g.id === gid);
     const feature = group?.features.find(f => f.id === fid);
     if (!feature) return;
 
-    if (tab === 'existing') {
+    if (activeTab === 'existing') {
       const code = document.getElementById('m-tpl-code').value;
       const name = document.getElementById('m-tpl-name').value.trim() || code;
       const size = document.getElementById('m-tpl-size').value.trim() || '1080x1920';
       if (!code) return;
       feature.templates.push({ code, name, size });
-    } else {
+    } else if (activeTab === 'upload') {
       const code = document.getElementById('m-up-code').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
       const name = document.getElementById('m-up-name').value.trim() || code;
       const size = document.getElementById('m-up-size').value.trim() || '1080x1920';
@@ -1067,18 +1092,89 @@ function showAddTemplate(gid, fid) {
       if (!availableTemplates.includes(code)) availableTemplates.push(code);
       feature.templates.push({ code, name, size });
 
-      // Reload field config (auto-detected by server)
       const fcRes = await fetch('/api/admin/template-fields');
       fieldConfig = await fcRes.json();
-
-      // Reload template defs
       const defsRes2 = await fetch('/api/admin/template-defs');
       const defs2 = await defsRes2.json();
       defs2.forEach(d2 => { SLOT_DEFS[d2.code] = d2; });
 
       const autoCount = json.autoFields?.length || 0;
       if (autoCount > 0) {
-        showToast(`Uploaded! Auto-detected ${autoCount} fields. Click template to configure prompts.`, 'ok');
+        showToast(`Uploaded! Auto-detected ${autoCount} fields.`, 'ok');
+      }
+    } else if (activeTab === 'image') {
+      const code = document.getElementById('m-img-code').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+      const name = document.getElementById('m-img-name').value.trim() || code;
+      const size = document.getElementById('m-img-size').value.trim() || '1080x1920';
+      const imgFile = document.getElementById('m-img-file').files[0];
+      if (!code || !imgFile) { showToast('Code and image file required', 'err'); return; }
+
+      const confirmBtn = document.getElementById('modal-confirm');
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'AI analyzing...';
+
+      try {
+        const fd = new FormData();
+        fd.append('code', code);
+        fd.append('image', imgFile);
+        const res = await fetch('/api/upload-template-image', { method: 'POST', body: fd });
+        const json = await res.json();
+        if (!res.ok) { showToast(json.error || 'Failed', 'err'); confirmBtn.disabled = false; confirmBtn.textContent = 'Add'; return; }
+
+        if (!availableTemplates.includes(code)) availableTemplates.push(code);
+        feature.templates.push({ code, name, size });
+
+        const fcRes = await fetch('/api/admin/template-fields');
+        fieldConfig = await fcRes.json();
+        const defsRes2 = await fetch('/api/admin/template-defs');
+        const defs2 = await defsRes2.json();
+        defs2.forEach(d2 => { SLOT_DEFS[d2.code] = d2; });
+
+        showToast(`Template created from image! ${json.autoFields?.length || 0} fields detected.`, 'ok');
+      } catch (err) {
+        showToast('Error: ' + err.message, 'err');
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Add';
+        return;
+      }
+    } else if (activeTab === 'figma') {
+      const figmaUrl = document.getElementById('m-figma-url').value.trim();
+      const code = document.getElementById('m-figma-code').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+      const name = document.getElementById('m-figma-name').value.trim() || code;
+      const size = document.getElementById('m-figma-size').value.trim() || '1080x1920';
+      if (!figmaUrl || !code) { showToast('Figma URL and code required', 'err'); return; }
+
+      const confirmBtn = document.getElementById('modal-confirm');
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Fetching Figma...';
+      const statusEl = document.getElementById('m-figma-status');
+      statusEl.innerHTML = '<div style="font-size:12px;color:#818cf8">Fetching design from Figma & analyzing layout...</div>';
+
+      try {
+        const res = await fetch('/api/import-figma', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ figma_url: figmaUrl, code })
+        });
+        const json = await res.json();
+        if (!res.ok) { showToast(json.error || 'Import failed', 'err'); confirmBtn.disabled = false; confirmBtn.textContent = 'Add'; statusEl.innerHTML = `<div style="font-size:12px;color:#f87171">${json.error}</div>`; return; }
+
+        if (!availableTemplates.includes(code)) availableTemplates.push(code);
+        feature.templates.push({ code, name, size });
+
+        const fcRes = await fetch('/api/admin/template-fields');
+        fieldConfig = await fcRes.json();
+        const defsRes2 = await fetch('/api/admin/template-defs');
+        const defs2 = await defsRes2.json();
+        defs2.forEach(d2 => { SLOT_DEFS[d2.code] = d2; });
+
+        showToast(`Figma imported! ${json.autoFields?.length || 0} fields detected.`, 'ok');
+      } catch (err) {
+        showToast('Error: ' + err.message, 'err');
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Add';
+        statusEl.innerHTML = `<div style="font-size:12px;color:#f87171">${err.message}</div>`;
+        return;
       }
     }
     renderGroups();
@@ -1094,8 +1190,29 @@ function showAddTemplate(gid, fid) {
 function switchTplTab(tab) {
   document.getElementById('m-tpl-existing').style.display = tab === 'existing' ? '' : 'none';
   document.getElementById('m-tpl-upload').style.display = tab === 'upload' ? '' : 'none';
-  document.getElementById('m-tab-existing').style.cssText = tab === 'existing' ? 'flex:1;font-weight:700;background:rgba(240,96,96,.15);color:#F9A3A3' : 'flex:1';
-  document.getElementById('m-tab-upload').style.cssText = tab === 'upload' ? 'flex:1;font-weight:700;background:rgba(240,96,96,.15);color:#F9A3A3' : 'flex:1';
+  document.getElementById('m-tpl-image').style.display = tab === 'image' ? '' : 'none';
+  document.getElementById('m-tpl-figma').style.display = tab === 'figma' ? '' : 'none';
+  const active = 'flex:1;font-weight:700;background:rgba(240,96,96,.15);color:#F9A3A3';
+  const inactive = 'flex:1';
+  document.getElementById('m-tab-existing').style.cssText = tab === 'existing' ? active : inactive;
+  document.getElementById('m-tab-upload').style.cssText = tab === 'upload' ? active : inactive;
+  document.getElementById('m-tab-image').style.cssText = tab === 'image' ? active : inactive;
+  document.getElementById('m-tab-figma').style.cssText = tab === 'figma' ? active : inactive;
+}
+
+function onImgFileChange(input) {
+  const file = input.files?.[0];
+  const zone = document.getElementById('m-img-zone');
+  const preview = document.getElementById('m-img-preview');
+  if (file) {
+    zone.classList.add('has-file');
+    zone.childNodes[0].textContent = file.name;
+    preview.innerHTML = `<img src="${URL.createObjectURL(file)}" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid #27272a">`;
+  } else {
+    zone.classList.remove('has-file');
+    zone.childNodes[0].textContent = 'Click to upload template screenshot (PNG, JPG)';
+    preview.innerHTML = '';
+  }
 }
 
 // ===== DELETE =====
