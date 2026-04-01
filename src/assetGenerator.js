@@ -1,10 +1,8 @@
-// ESM module — GEMINI API VERSION
-import { GoogleGenAI } from '@google/genai';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+// ESM module — FAL.AI VERSION (Nano Banana)
 import { getFromCache, saveToCache } from './cache.js';
 
-const genAI   = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const genAIv2 = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const FAL_KEY = process.env.FAL_KEY || process.env.GEMINI_API_KEY;
+const FAL_HEADERS = { 'Content-Type': 'application/json', 'Authorization': `Key ${FAL_KEY}` };
 
 async function retryWithBackoff(fn, maxRetries = 2) {
   for (let i = 0; i <= maxRetries; i++) {
@@ -16,22 +14,78 @@ async function retryWithBackoff(fn, maxRetries = 2) {
   }
 }
 
+// Helper: call fal.ai any-llm for text generation
+async function falLLM(prompt, model = 'google/gemini-2.5-flash') {
+  const res = await fetch('https://fal.run/fal-ai/any-llm', {
+    method: 'POST',
+    headers: FAL_HEADERS,
+    body: JSON.stringify({ model, prompt }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`fal any-llm error ${res.status}: ${err}`);
+  }
+  const data = await res.json();
+  return data.output;
+}
+
+// Helper: call fal.ai any-llm/vision for image understanding
+async function falVision(imageUrl, prompt, model = 'google/gemini-2.5-flash') {
+  const res = await fetch('https://fal.run/fal-ai/any-llm/vision', {
+    method: 'POST',
+    headers: FAL_HEADERS,
+    body: JSON.stringify({ model, prompt, image_url: imageUrl }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`fal vision error ${res.status}: ${err}`);
+  }
+  const data = await res.json();
+  return data.output;
+}
+
+// Convert local file to base64 data URI
+function fileToDataUri(filePath, mimeType = 'image/png') {
+  const { readFileSync } = require('fs');
+  const buffer = readFileSync(filePath);
+  return `data:${mimeType};base64,${buffer.toString('base64')}`;
+}
+
+// Aspect ratio string to pixel dimensions
+function aspectToSize(aspectRatio) {
+  const map = {
+    '9:16': { width: 1080, height: 1920 },
+    '16:9': { width: 1920, height: 1080 },
+    '3:4': { width: 1080, height: 1440 },
+    '4:3': { width: 1440, height: 1080 },
+    '1:1': { width: 1080, height: 1080 },
+  };
+  return map[aspectRatio] || map['9:16'];
+}
+
 export async function generateImage(prompt, aspectRatio = '9:16') {
   const cacheKey = `${prompt}__ar:${aspectRatio}__t:${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
   const cached_path = await retryWithBackoff(async () => {
-    const response = await genAIv2.models.generateImages({
-      model: 'imagen-4.0-generate-001',
-      prompt,
-      config: { numberOfImages: 1, outputMimeType: 'image/png', aspectRatio }
+    console.log(`[fal-nano-banana] generating image...`);
+    const size = aspectToSize(aspectRatio);
+    const res = await fetch('https://fal.run/fal-ai/nano-banana', {
+      method: 'POST',
+      headers: FAL_HEADERS,
+      body: JSON.stringify({ prompt, image_size: size }),
     });
-
-    if (!response.generatedImages?.[0]?.image?.imageBytes) {
-      console.error('[imagen-fail] full response:', JSON.stringify(response).slice(0, 500));
-      throw new Error(`Image generation failed: ${JSON.stringify(response).slice(0, 200)}`);
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`fal image gen error ${res.status}: ${err}`);
     }
-    const imageData = response.generatedImages[0].image.imageBytes;
-    const buffer = Buffer.from(imageData, 'base64');
+    const data = await res.json();
+    const imgUrl = data.images?.[0]?.url;
+    if (!imgUrl) throw new Error('No image returned from fal.ai');
+
+    // Download the image
+    const imgRes = await fetch(imgUrl);
+    if (!imgRes.ok) throw new Error(`Failed to download image: ${imgRes.status}`);
+    const buffer = Buffer.from(await imgRes.arrayBuffer());
     return saveToCache(cacheKey, buffer);
   });
 
@@ -40,12 +94,7 @@ export async function generateImage(prompt, aspectRatio = '9:16') {
 
 export async function generateText(prompt) {
   return retryWithBackoff(async () => {
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
-      generationConfig: { temperature: 1.2 },
-    });
-    const result = await model.generateContent(prompt);
-    return result.response.text().trim();
+    return falLLM(prompt);
   });
 }
 
@@ -53,15 +102,11 @@ export async function describeFace(imagePath) {
   const { readFileSync } = await import('fs');
   const imageBuffer = readFileSync(imagePath);
   const base64 = imageBuffer.toString('base64');
+  const dataUri = `data:image/png;base64,${base64}`;
   const facePrompt = 'Describe this person\'s facial features in detail for image generation purposes: face shape, skin tone, eye shape and color, nose shape, lip shape, eyebrow shape, hair color and style, approximate age range. Be precise and concise. Output ONLY the physical description, no intro or commentary.';
 
   return retryWithBackoff(async () => {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-    const result = await model.generateContent([
-      { inlineData: { mimeType: 'image/png', data: base64 } },
-      facePrompt,
-    ]);
-    return result.response.text().trim();
+    return falVision(dataUri, facePrompt);
   });
 }
 
@@ -69,29 +114,33 @@ export async function editImage(imagePath, modification, aspectRatio = '9:16') {
   const { readFileSync } = await import('fs');
   const imageBuffer = readFileSync(imagePath);
   const base64 = imageBuffer.toString('base64');
+  const dataUri = `data:image/png;base64,${base64}`;
 
   const cacheKey = `edit_${modification}_${imagePath}__ar:${aspectRatio}`;
   const cached = getFromCache(cacheKey);
   if (cached) return { type: 'file', path: cached };
 
   const cached_path = await retryWithBackoff(async () => {
-    const response = await genAIv2.models.generateContent({
-      model: 'gemini-2.5-flash-image',
-      contents: [{
-        role: 'user',
-        parts: [
-          { inlineData: { mimeType: 'image/png', data: base64 } },
-          { text: `Edit this photo: ${modification}. Keep EVERYTHING else exactly the same - same person, same face, same skin, same clothes, same pose, same background, same lighting. The person must be 100% identical except for the specified change.` }
-        ]
-      }],
-      config: { responseModalities: ['image', 'text'] }
+    console.log(`[fal-nano-banana] editing image...`);
+    const res = await fetch('https://fal.run/fal-ai/nano-banana/edit', {
+      method: 'POST',
+      headers: FAL_HEADERS,
+      body: JSON.stringify({
+        prompt: `Edit this photo: ${modification}. Keep EVERYTHING else exactly the same - same person, same face, same skin, same clothes, same pose, same background, same lighting. The person must be 100% identical except for the specified change.`,
+        image_urls: [dataUri],
+      }),
     });
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`fal edit error ${res.status}: ${err}`);
+    }
+    const data = await res.json();
+    const imgUrl = data.images?.[0]?.url;
+    if (!imgUrl) throw new Error('No image returned from fal edit');
 
-    const parts = response.candidates?.[0]?.content?.parts || [];
-    const imgPart = parts.find(p => p.inlineData);
-    if (!imgPart) throw new Error('No image returned from edit');
-
-    const buffer = Buffer.from(imgPart.inlineData.data, 'base64');
+    const imgRes = await fetch(imgUrl);
+    if (!imgRes.ok) throw new Error(`Failed to download edited image: ${imgRes.status}`);
+    const buffer = Buffer.from(await imgRes.arrayBuffer());
     return saveToCache(cacheKey, buffer);
   });
 
@@ -113,6 +162,7 @@ export async function analyzeTemplateImage(imagePath) {
     imageBuffer = readFileSync(imagePath);
   }
   const base64 = imageBuffer.toString('base64');
+  const dataUri = `data:image/jpeg;base64,${base64}`;
 
   const prompt = `You are analyzing an app store screenshot template. This image contains a designed layout with text and photos composed together.
 
@@ -140,15 +190,10 @@ Rules:
 - num_images = total count of photos`;
 
   return retryWithBackoff(async () => {
-    console.log('[gemini-vision] analyzing template image...');
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-    const result = await model.generateContent([
-      { inlineData: { mimeType: 'image/jpeg', data: base64 } },
-      prompt,
-    ]);
-    let text = result.response.text().trim();
+    console.log('[fal-vision] analyzing template image...');
+    let text = await falVision(dataUri, prompt);
     text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-    console.log(`[gemini-vision] extracted: ${text.slice(0, 300)}`);
+    console.log(`[fal-vision] extracted: ${text.slice(0, 300)}`);
     return JSON.parse(text);
   });
 }
@@ -211,16 +256,11 @@ function extractLayers(node, layers = [], depth = 0) {
   if (!node) return layers;
 
   const name = (node.name || '').trim();
-  const type = node.type; // FRAME, TEXT, RECTANGLE, IMAGE, GROUP, etc.
+  const type = node.type;
 
   if (depth > 0 && name) {
-    const info = {
-      name,
-      type,
-      id: node.id,
-    };
+    const info = { name, type, id: node.id };
 
-    // Get bounding box if available
     if (node.absoluteBoundingBox) {
       info.x = Math.round(node.absoluteBoundingBox.x);
       info.y = Math.round(node.absoluteBoundingBox.y);
@@ -228,7 +268,6 @@ function extractLayers(node, layers = [], depth = 0) {
       info.height = Math.round(node.absoluteBoundingBox.height);
     }
 
-    // Detect fills for color info
     if (node.fills?.length > 0) {
       const fill = node.fills[0];
       if (fill.type === 'SOLID' && fill.color) {
@@ -239,7 +278,6 @@ function extractLayers(node, layers = [], depth = 0) {
       }
     }
 
-    // Text content
     if (type === 'TEXT' && node.characters) {
       info.text = node.characters;
       if (node.style) {
@@ -251,7 +289,6 @@ function extractLayers(node, layers = [], depth = 0) {
     layers.push(info);
   }
 
-  // Recurse children
   if (node.children) {
     for (const child of node.children) {
       extractLayers(child, layers, depth + 1);
@@ -270,7 +307,6 @@ export async function fetchFigmaImage(figmaUrl) {
   const token = process.env.FIGMA_TOKEN;
   if (!token) throw new Error('FIGMA_TOKEN not set in environment');
 
-  // Fetch node tree and image in parallel
   const ids = nodeId || '';
   const [nodesRes, imgRes] = await Promise.all([
     fetch(`https://api.figma.com/v1/files/${fileKey}/nodes?ids=${encodeURIComponent(ids)}`, {
@@ -281,7 +317,6 @@ export async function fetchFigmaImage(figmaUrl) {
     }),
   ]);
 
-  // Extract layers from node tree
   let layers = [];
   if (nodesRes.ok) {
     const nodesData = await nodesRes.json();
@@ -293,7 +328,6 @@ export async function fetchFigmaImage(figmaUrl) {
     }
   }
 
-  // Download image
   if (!imgRes.ok) {
     const errText = await imgRes.text();
     throw new Error(`Figma API error ${imgRes.status}: ${errText}`);
@@ -315,7 +349,6 @@ export async function fetchFigmaImage(figmaUrl) {
 }
 
 // Analyze a template image and generate full HTML/CSS layout
-// layers: optional array of Figma layer info [{name, type, x, y, width, height, color, text, fontSize, fontWeight}]
 export async function analyzeTemplateLayout(imagePath, layers = []) {
   const { readFileSync } = await import('fs');
   const sharp = (await import('sharp')).default;
@@ -330,8 +363,8 @@ export async function analyzeTemplateLayout(imagePath, layers = []) {
     imageBuffer = readFileSync(imagePath);
   }
   const base64 = imageBuffer.toString('base64');
+  const dataUri = `data:image/jpeg;base64,${base64}`;
 
-  // Build layer mapping instructions if layers are provided
   let layerInstructions = '';
   if (layers.length > 0) {
     const layerList = layers.map(l => {
@@ -402,15 +435,10 @@ The HTML must follow this structure:
 </html>`;
 
   return retryWithBackoff(async () => {
-    console.log('[gemini-vision] analyzing template layout from image...');
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-    const result = await model.generateContent([
-      { inlineData: { mimeType: 'image/jpeg', data: base64 } },
-      prompt,
-    ]);
-    let html = result.response.text().trim();
+    console.log('[fal-vision] analyzing template layout from image...');
+    let html = await falVision(dataUri, prompt);
     html = html.replace(/^```(?:html)?\s*/i, '').replace(/\s*```$/, '');
-    console.log(`[gemini-vision] generated HTML layout (${html.length} chars)`);
+    console.log(`[fal-vision] generated HTML layout (${html.length} chars)`);
     return html;
   });
 }

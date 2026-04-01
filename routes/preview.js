@@ -65,8 +65,18 @@ router.get('/:template_code', (req, res) => {
     t2 = '';
   }
 
-  const mainImg = req.query.main || 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800&q=80';
-  const beforeImg = req.query.before || 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=300&q=80';
+  const demoImages = [
+    'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800&q=80',
+    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800&q=80',
+    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&q=80',
+    'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&q=80',
+    'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&q=80',
+    'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=800&q=80',
+    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80',
+    'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=800&q=80',
+  ];
+  const mainImg = req.query.main || demoImages[0];
+  const beforeImg = req.query.before || demoImages[1];
   const color = req.query.color || '#6C63FF';
   const accentStart = req.query.accent_start || '';
   const accentEnd = req.query.accent_end || '';
@@ -109,18 +119,25 @@ router.get('/:template_code', (req, res) => {
   html = html.replace(/\{\{background\}\}/g, color);
 
   // Replace dynamic image fields from field config (with labels)
+  let imgIdx = 0;
   fields.filter(f => f.type === 'image' || f.type === 'upload').forEach(f => {
-    const url = req.query[f.key] || mainImg;
+    const url = req.query[f.key] || demoImages[imgIdx % demoImages.length];
+    imgIdx++;
     html = replaceImagePlaceholder(html, f.key, url);
   });
 
   // Replace remaining {{...}} placeholders
+  const defaultTitle = titleText || 'Your Look<br>Today';
+  let remainImgIdx = 0;
   html = html.replace(/\{\{(\w+)\}\}/g, (match, key) => {
     if (req.query[key]) return req.query[key];
-    if (key === 'app_name') return demoAppName || '';
-    if (key === 'tagline') return titleText;
-    if (key.startsWith('text_')) return titleText;
-    if (key.includes('image') || key.includes('img') || key.includes('photo')) return mainImg;
+    if (key === 'app_name') return demoAppName || 'App Name';
+    if (key === 'tagline') return defaultTitle;
+    if (key.startsWith('text_')) return defaultTitle;
+    if (key === 'description') return 'Amazing AI-powered transformation';
+    if (key.includes('image') || key.includes('img') || key.includes('photo')) {
+      return demoImages[(remainImgIdx++) % demoImages.length];
+    }
     return '';
   });
 
@@ -134,10 +151,9 @@ router.get('/:template_code', (req, res) => {
   const fieldLabelsJSON = JSON.stringify(fieldLabelMap).replace(/</g, '\\u003c');
   const labelOverlay = !showLabels ? '' : `
   <style>
-    [data-field-key]{position:relative;cursor:pointer}
+    [data-field-key]{cursor:pointer}
     .field-label-overlay{position:absolute;top:8px;left:8px;padding:4px 10px;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);color:#fff;font-size:13px;font-weight:600;border-radius:6px;pointer-events:none;opacity:0;transition:opacity .2s;z-index:999;font-family:'Inter',system-ui,sans-serif;white-space:nowrap;letter-spacing:.3px}
     .field-label-parent:hover .field-label-overlay{opacity:1}
-    .field-label-parent{position:relative}
   </style>
   <script>
   document.addEventListener('DOMContentLoaded', function(){

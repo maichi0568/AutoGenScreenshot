@@ -20,9 +20,8 @@ export function generateColorCSS(accentStart, accentEnd) {
       background-clip: text !important;
       -webkit-text-fill-color: transparent !important;
     }
-    [class*="img"], [class*="frame"], [class*="container"],
-    [class*="block"], [class*="photo"], [class*="rect"],
-    .before-rect, .main-frame, .circle-frame {
+    .before-rect, .main-frame, .circle-frame,
+    .main-img-frame {
       border-color: ${ae} !important;
     }
     .prompt-rect, .red-bg-bar, .desc-bg {
@@ -45,25 +44,10 @@ export function generateColorCSS(accentStart, accentEnd) {
  */
 export function generateWrapCSS() {
   return `<style>
-    .title,.tagline,.template-title,.figma-title {
+    .title,.tagline,.template-title {
       white-space:normal!important;
       width:1000px!important;
       max-width:1000px!important;
-    }
-    [class*="img-inner"],[class*="img-block"] > div {
-      position:absolute!important;
-      left:0!important;top:0!important;right:0!important;bottom:0!important;
-      width:100%!important;height:100%!important;
-      transform:none!important;
-    }
-    [class*="img-inner"] div,[class*="img-inner"] > div > div {
-      position:absolute!important;
-      left:0!important;top:0!important;
-      width:100%!important;height:100%!important;
-      transform:none!important;
-    }
-    [class*="img-inner"] img,[class*="img-block"] img {
-      width:100%!important;height:100%!important;object-fit:cover!important;
     }
   </style>`;
 }
